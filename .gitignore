@@ -1,0 +1,13 @@
+backend/.env
+frontend/.env
+backend/db/*.json
+
+
+*.log
+logs/
+debug.log
+*.bak
+*.tmp
+
+.DS_Store
+Thumbs.db

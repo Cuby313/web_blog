@@ -1,3 +1,7 @@
+/*
+Handles page interactions (fetching & displaying posts) 
+*/ 
+
 'use strict';
 
 const accordion = () => {
