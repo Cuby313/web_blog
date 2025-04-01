@@ -1,6 +1,7 @@
 backend/.env
 frontend/.env
 backend/db/*.json
+assets/images
 
 *.log
 logs/
@@ -10,5 +11,3 @@ debug.log
 
 .DS_Store
 Thumbs.db
-
-assets/images/
