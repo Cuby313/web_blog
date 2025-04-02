@@ -173,7 +173,7 @@ header {
 
 .desktop-nav .nav-link:hover { color: var(--accent); }
 
-.btn-group, .mobile-nav { display: none; }
+.mobile-nav { display: none; }
 
 .nav-menu-btn, .nav-close-btn {
   background: var(--action-secondary);
@@ -273,7 +273,6 @@ header {
   max-width: 500px;
   position: relative;  
 }
-
 
 /*-----------------------------------*\ 
   #BLOG SECTION
