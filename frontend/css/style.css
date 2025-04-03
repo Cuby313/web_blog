@@ -204,6 +204,8 @@ header {
   transform: translateX(100%);
   visibility: hidden;
   display: block;
+  z-index: 10;
+  display: block;
 }
 
 .mobile-nav.active {
