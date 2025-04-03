@@ -93,7 +93,12 @@ html {
 .container {
   max-width: 1150px;
   margin: 0 auto;
-  padding: 0 15px;
+  padding: 20px 15px;
+}
+
+.hero .container {
+  padding-top: 20px;
+  padding-bottom: 20px;
 }
 
 .btn {
@@ -129,7 +134,7 @@ header {
   background-image: url('../../assets/images/header.png');
   background-size: cover;
   background-position: center;
-  position: relative;
+  background-repeat: no-repeat;
 }
 
 .navbar {
@@ -288,7 +293,6 @@ header {
   line-height: 1.3;
   text-align: center;
   color: var(--foreground-secondary);
-  padding-top: 20px;
 }
 
 .blog-card-group { margin-bottom: 3rem; }
@@ -507,12 +511,17 @@ footer .wrapper { text-align: center; }
     object-fit: cover;
     border-radius: 5px;
   }
+
+  .hero .container {
+    padding-top: 20px;
+    padding-bottom: 20px;
+  }
 }
 
 @media (min-width: 650px) {
   :root { --fs-1: 2.25rem; }
 
-  .container { padding: 0 30px; }
+  .container { padding: 20px 30px; }
   
   .navbar { padding: 30px 0; }
 
@@ -563,13 +572,23 @@ footer .wrapper { text-align: center; }
 
   footer .wrapper { text-align: left; }
   .footer-text { margin: 0; }
+
+  .hero .container {
+    padding-top: 20px;
+    padding-bottom: 20px;
+  }
 }
 
 @media (min-width: 768px) {
   .flex-wrapper { display: flex; }
   .btn-group, .mobile-nav { display: none; }
 
-  .container { max-width: 800px; }
+  .container { max-width: 800px; padding: 20px 30px; }
+
+  .hero .container {
+    padding-top: 20px;
+    padding-bottom: 20px;
+  }
 }
 
 /* Aside comes in action here*/
@@ -578,7 +597,7 @@ footer .wrapper { text-align: center; }
 
   .container { 
     max-width: 1150px; 
-    padding-top: 40px;
+    padding-top: 40px 30px;
   }
 
   .navbar { justify-content: space-between; }
@@ -590,6 +609,8 @@ footer .wrapper { text-align: center; }
     grid-template-columns: 1fr 1fr;
     gap: 50px;
     align-items: center;
+    padding-top: 20px;
+    padding-bottom: 20px;
   }
 
   .hero .btn-group {
