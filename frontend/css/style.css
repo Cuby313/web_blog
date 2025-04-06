@@ -282,6 +282,10 @@ header {
   position: relative;
 }
 
+.hero {
+  padding-bottom: 32px;
+}
+
 /*-----------------------------------*\ 
   #BLOG SECTION
 \*-----------------------------------*/
@@ -405,9 +409,13 @@ footer .container {
   grid-template-columns: 1fr;
   gap: 30px;
   align-items: center;
+  padding-top: 20px;
+  padding-bottom: 20px;
 }
 
 footer .wrapper { text-align: center; }
+
+footer .footer-text {grid-column: 3;}
 
 .footer-logo { margin-bottom: 10px; }
 
