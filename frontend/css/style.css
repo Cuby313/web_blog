@@ -23,7 +23,11 @@
   --fs-5: 0.75rem;
 
   /* Spacing */
-  --py: 5rem;
+  --py: 1.875rem;
+
+  /* Post Page*/
+  --body-font-family: 'Noto Sans', sans-serif;
+  --text-color: #2D3748;
 }
 
 /*-----------------------------------*\ 
@@ -409,8 +413,6 @@ footer .container {
   grid-template-columns: 1fr;
   gap: 30px;
   align-items: center;
-  padding-top: 20px;
-  padding-bottom: 20px;
 }
 
 footer .wrapper { text-align: center; }
@@ -497,6 +499,74 @@ footer .footer-text {grid-column: 3;}
 
 .like-count p {
   margin: 0; 
+}
+
+/*-----------------------------------*\ 
+  #POST PAGE
+\*-----------------------------------*/
+
+.blog-post {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 20px;
+  background: var(--background-primary)
+}
+
+.post-thumbnail {
+  width: 100%;
+  margin: 0 0 20px 0;
+}
+
+.entry-image {
+  display: block;
+  height: auto;
+  max-width: 100%;
+  object-fit: cover;
+}
+
+.entry-title {
+  text-align: center;
+  font-style: normal;
+  font-weight: 700;
+  font-size: 32px;
+  line-height: 1.5;
+  letter-spacing: -0.042em;
+  font-family: var(--body-font-family);
+  color: var(--text-color)
+}
+
+.entry-content {
+  font-style: normal;
+  font-weight: normal;
+  font-size: 17px;
+  line-height: 1.6;
+  font-family: var(--body-font-family);
+  color: var(--text-color)
+}
+
+.entry-content p {
+  margin-bottom: 20px;
+}
+
+.entry-tags {
+  margin: 30px 0;
+  padding: 15px;
+  background: var(--action-secondary);
+  border-radius: 5px;
+  text-align: center;
+}
+
+.entry-tags span {
+  margin: 0 10px;
+  color: var(--foreground-tertiary)
+}
+
+.entry-footer {
+  margin-top: 30px;
+}
+
+.space-post-footer {
+  margin: 60px;
 }
 
 /*-----------------------------------*\ 
