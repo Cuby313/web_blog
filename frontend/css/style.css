@@ -502,6 +502,79 @@ footer .footer-text {grid-column: 3;}
 }
 
 /*-----------------------------------*\ 
+  #LOGIN POPUP
+\*-----------------------------------*/
+
+.login-popup {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  justify-content: center;
+  align-items: center;
+}
+
+.login-container {
+  background: var(--background-primary);
+  padding: 20px;
+  border-radius: 10px;
+  width: 300px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  position: relative;
+  transform: translateY(-100%);
+  transition: transform 0.3s ease-in-out;
+}
+
+.login-popup.active {
+  display: flex;
+}
+
+.login-popup.active .login-container {
+  transform: translateY(0);
+}
+
+.login-container h2 {
+  text-align: center;
+  margin-bottom: 20px;
+  color: var(--foreground-primary);
+}
+
+.login-container label {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--foreground-primary);
+}
+
+.login-container input {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 15px;
+  border: 1px solid var(--foreground-tertiary);
+  border-radius: 5px;
+  font-size: var(--fs-4);
+}
+
+.login-container .btn {
+  width: 100%;
+  margin: 5px 0;
+}
+
+.nav-link.login-btn {
+  cursor: pointer;
+  padding: 10px 15px;
+  color: var(--foreground-secondary);
+  transition: color 0.3s;
+}
+
+.nav-link.login-btn:hover {
+  color: var(--accent);
+}
+
+/*-----------------------------------*\ 
   #POST PAGE
 \*-----------------------------------*/
 

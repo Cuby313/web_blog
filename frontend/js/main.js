@@ -12,6 +12,42 @@ document.addEventListener('DOMContentLoaded', () => {
   const nav = document.querySelector('.mobile-nav');
   const navMenuBtn = document.querySelector('.nav-menu-btn');
   const navCloseBtn = document.querySelector('.nav-close-btn');
+  const loginBtn = document.getElementById('loginBtn');
+  const mobileLoginBtn = document.getElementById('mobileLoginBtn');
+  const loginPopup = document.getElementById('loginPopup');
+  const closeLogin = document.getElementById('closeLogin');
+
+  // Mobile navigation menu functionality
+  if (navMenuBtn && navCloseBtn && nav) {
+    const navToggleFunc = () => { nav.classList.toggle('active'); };
+    navMenuBtn.addEventListener('click', navToggleFunc);
+    navCloseBtn.addEventListener('click', navToggleFunc);
+  }
+
+  // Login popup
+  if (loginBtn) {
+    loginBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (loginPopup) {
+        loginPopup.classList.add('active');
+      }
+    });
+  }
+
+  if (mobileLoginBtn) {
+    mobileLoginBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (loginPopup) {
+        loginPopup.classList.add('active');
+      }
+    });
+  }
+
+  if (closeLogin && loginPopup) {
+    closeLogin.addEventListener('click', () => {
+      loginPopup.classList.remove('active');
+    });
+  }
 
   // Login form
   if (loginForm) {
@@ -19,12 +55,30 @@ document.addEventListener('DOMContentLoaded', () => {
       e.preventDefault();
       const username = document.getElementById('username').value;
       const password = document.getElementById('password').value;
-      const result = await api.login({ username, password });
-      console.log(result);
+      
+      try {
+        const result = await api.login({ username, password });
+        console.log('Login result:', result);
+
+        if (result.success) {
+          localStorage.setItem('token', result.token);
+          window.location.href = 'dashboard.html';
+        } else {
+          alert('Invalid username or password!');
+        }
+      } catch (error) {
+        console.error('Login error:', error);
+        alert('Login failed. Please try again.');
+      }
+
+      loginForm.reset();
+      if (loginPopup) {
+        loginPopup.classList.remove('active');
+      }
     });
   }
 
-  // Creates post form
+  // Creates post form (only dashboard)
   if (createPostForm) {
     createPostForm.addEventListener('submit', async(e) => {
       e.preventDefault();
@@ -61,7 +115,9 @@ document.addEventListener('DOMContentLoaded', () => {
     </div>
     `;
 
-  blogCardGroup.insertBefore(blogCard, blogCardGroup.firstChild);
+  if (blogCardGroup) {
+    blogCardGroup.insertBefore(blogCard, blogCardGroup.firstChild);
+    }
   }
 
   // Load initial posts
@@ -100,9 +156,4 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
-
-  // Mobile navigation menu functionality
-  const navToggleFunc = () => { nav.classList.toggle('active'); };
-  navMenuBtn.addEventListener('click', navToggleFunc);
-  navCloseBtn.addEventListener('click', navToggleFunc);
 });
