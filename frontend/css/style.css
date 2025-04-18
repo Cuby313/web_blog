@@ -565,7 +565,6 @@ footer .footer-text {grid-column: 3;}
 
 .nav-link.login-btn {
   cursor: pointer;
-  padding: 10px 15px;
   color: var(--foreground-secondary);
   transition: color 0.3s;
 }
