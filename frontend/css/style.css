@@ -642,6 +642,110 @@ footer .footer-text {grid-column: 3;}
 }
 
 /*-----------------------------------*\ 
+  #DASHBOARD PAGE
+\*-----------------------------------*/
+
+.editor-form-container {
+  max-width: 1080px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background: var(--background-primary);
+  border-radius: 10px;
+  box-shadow: 0 5px 15px hsla(0, 0%, 0%, 0.05);
+}
+
+.editor-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-group label {
+  color: var(--foreground-primary);
+  font-weight: 700;
+  font-size: var(--fs-4);
+}
+
+.form-group input,
+.form-group textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--foreground-tertiary);
+  border-radius: 5px;
+  font-family: var(--body-font-family);
+  font-size: var(--fs-4);
+  color: var(--text-color);
+  background: var(--action-secondary);
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px hsla(229, 76%, 66%, 0.2);
+}
+
+.image-preview {
+  max-width: 300px;
+  max-height: 200px;
+  object-fit: cover;
+  border-radius: 5px;
+  margin-top: 1rem;
+  display: none;
+}
+
+.song-preview-container {
+  position: relative;
+  max-width: 300px;
+  margin-top: 1rem;
+}
+
+.song-preview {
+  width: 100%;
+  aspect-ratio: 16/9;
+  object-fit: cover;
+  border-radius: 5px;
+  transition: transform 0.3s ease;
+}
+
+.song-preview:hover {
+  transform: scale(1.05);
+}
+
+.play-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 50px;
+  height: 50px;
+  background: var(--accent);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.8;
+  transition: opacity 0.3s ease;
+}
+
+.play-icon:hover {
+  opacity: 1;
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+}
+
+/*-----------------------------------*\ 
   #MEDIA QUERIES
 \*-----------------------------------*/
 

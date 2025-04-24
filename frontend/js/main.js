@@ -16,6 +16,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const mobileLoginBtn = document.getElementById('mobileLoginBtn');
   const loginPopup = document.getElementById('loginPopup');
   const closeLogin = document.getElementById('closeLogin');
+  const imageInput = document.getElementById('post-image');
+  const imagePreview = document.getElementById('image-preview');
+  const songInput = document.getElementById('song-link');
+  const songPreview = document.getElementById('song-preview');
 
   // Mobile navigation menu functionality
   if (navMenuBtn && navCloseBtn && nav) {
@@ -118,6 +122,37 @@ document.addEventListener('DOMContentLoaded', () => {
   if (blogCardGroup) {
     blogCardGroup.insertBefore(blogCard, blogCardGroup.firstChild);
     }
+  }
+
+  // Dashboard
+  imageInput.addEventListener('change', function() {
+    const file = this.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        imagePreview.src = e.target.result;
+        imagePreview.style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+
+  // YouTube thumbnail preview
+  songInput.addEventListener('input', function() {
+    const url = this.value;
+    const videoId = extractYouTubeId(url);
+    if (videoId) {
+      songPreview.src = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+      songPreview.style.display = 'block';
+    } else {
+      songPreview.style.display = 'none';
+    }
+  });
+
+  function extractYouTubeId(url) {
+    const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+    const match = url.match(regex);
+    return match ? match[1] : null;
   }
 
   // Load initial posts

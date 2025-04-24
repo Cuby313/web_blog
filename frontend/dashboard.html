@@ -28,23 +28,67 @@
   <!-- Editor dashboard -->
   <main>
     <div class="blog-post" id="blog-post">
-      <div class="post-thumbnail" id="blog-thumbnail">
-        <form
+      <div class="editor-form-container">
+        <form id="blog-editor-form" class="editor-form">
+          <div class="form-group">
+            <label for="post-title">Blog Title</label>
+            <input 
+              type="text" 
+              id="post-title" 
+              name="title" 
+              placeholder="Enter blog title" 
+              required
+            >
+          </div>
+
+          <div class="form-group">
+            <label for="post-image">Featured Image</label>
+            <input 
+              type="file" 
+              id="post-image" 
+              name="image" 
+              accept="image/*"
+            >
+            <img id="image-preview" class="image-preview" alt="Image preview">
+          </div>
+
+          <div class="form-group">
+            <label for="post-content">Content</label>
+            <textarea 
+              id="post-content" 
+              name="content" 
+              rows="10" 
+              placeholder="Write your blog post here..."
+              required
+            ></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="song-link">Song of the Day (YouTube URL)</label>
+            <input 
+              type="url" 
+              id="song-link" 
+              name="song" 
+              placeholder="Enter YouTube URL"
+            >
+            <div class="song-preview-container">
+              <img id="song-preview" class="song-preview" alt="Song thumbnail">
+              <div class="play-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
+                  <path d="M8 5v14l11-7z"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn btn-secondary" onclick="resetForm()">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save Post</button>
+          </div>
+        </form>
       </div>
-
-      <div class="post-wrapper">
-        <h1 class="post-title">
-          <h1 class="entry-title">BLOG TITLE</h1>
-        </header>
-
-        <div class="edit-content">
-          <p>MAKE A FORM</p>
-          <p>TO EDIT BLOG CONTENT</p>
-          <p>ANOTHER ONE??</p>
-        </div>
-
-    <div class="space-post-footer">
     </div>
+    <div class="space-post-footer"></div>
   </main>
 
   <!-- Footer -->
