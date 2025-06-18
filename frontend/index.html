@@ -17,8 +17,8 @@
   <header>
     <div class="container">
       <nav class="navbar">
-        <a href="#">
-          <img src="../assets/images/front_logo_machu.jpg" alt="Blog Logo" width="150" class="logo">
+        <a href="index.html">
+          <img src="/images/front_logo_machu.jpg" alt="Blog Logo" width="150" class="logo">
         </a>
         
         <div class="btn-group">
@@ -32,6 +32,7 @@
             <li><a href="#" class="nav-link">Home</a></li>
             <li><a href="#" class="nav-link">About Me</a></li>
             <li><a href="#" class="nav-link">Contact</a></li>
+            <li><a href="#" class="nav-link login-btn" id="loginBtn">Login</a></li>
           </ul>
         </div>
 
@@ -46,22 +47,23 @@
               <li class="nav-item"><a href="#" class="nav-link">Home</a></li>
               <li class="nav-item"><a href="#" class="nav-link">About Me</a></li>
               <li class="nav-item"><a href="#" class="nav-link">Contact</a></li>
+              <li class="nav-item"><a href="#" class="nav-link login-btn" id="mobileLoginBtn">Login</a></li>
             </ul>
           </div>
 
           <div>
-            <p class="h3 nav-title">Topics</p>
+            <p class="h3 nav-title">Check it out</p>
             <ul>
               <li class="nav-item">
-                <a href="#" class="nav-link">Database</a>
+                <a href="#" class="nav-link">IF YOU WANT</a>
               </li>
 
               <li class="nav-item">
-                <a href="#" class="nav-link">Accessibility</a>
+                <a href="#" class="nav-link">ADD LINK TO SITES</a>
               </li>
 
               <li class="nav-item">
-                <a href="#" class="nav-link">Web Performance</a>
+                <a href="#" class="nav-link">YOU LIKE?</a>
               </li>
             </ul>
           </div>
@@ -82,7 +84,7 @@
         </div>
         <div class="right">
           <div class="img-box">
-            <img src="../assets/images/selfie.jpg" alt="Blog Logo" class="logo">
+            <img src="/images/selfie.jpg" alt="Blog Logo" class="logo">
             <div class="shape shape-1"></div>
             <div class="shape shape-2"></div>
           </div>
@@ -93,65 +95,30 @@
     <!-- Blog posts -->
     <div class="main">
       <div class="container">
-
         <div class="blog">
           <h2 class="h2">Latest Blog Post</h2>
-          <div class="blog-card-group">
-            <div class="blog-card">
-              <div class="blog-card-banner">
-                <img src="../assets/images/front_logo_machu.jpg" alt="Front logo machu"
-                  width="250" class="blog-banner-img">
-              </div>
-
-              <div class="blog-content-wrapper">
-                <button class="blog-topic text-tiny">TOPIC</button>
-                <h3>
-                  <a href="#" class="h3">BLOG TITLE</a>
-                </h3>
-                <p class="blog-text">
-                  BEGINNING OF BLOG...
-                </p>
-
-                <div class="wrapper-flex">
-                  <div class="wrapper">
-                    <p class="text-sm">
-                      <time datetime="2022-01-17">ENTER DATE HERE</time>                      
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
+          <div class="blog-card-group"></div>
         <!-- Load more blogs -->
       <button class="btn load-more">Load More</button>
     </div>
 
     <!-- Aside, right of blog posts -->
     <div class="aside"> 
-
       <div class="topics">
         <h2 class="h2">Topics</h2>
-          <a href="#" class="topic-btn">
-            <div class="icon-box">
-              <img src="../assets/images/grad_hat.svg" alt="Grad hat" width="30">            
-            </div>
-            <p>LEARN SOMETHING?</p>
-
+          <a href="#" class="topic-btn" data-tag="learn">
+            <div class="icon-box"><img src="/images/grad_hat.svg" alt="Grad hat" width="30"></div>
+            <p>Learn</p>
           </a>
 
-          <a href="#" class="topic-btn">
-            <div class="icon-box">
-              <img src="../assets/images/fire.webp" alt="Fire" width="30">            
-            </div>
-            <p>RANT?</p>
+          <a href="#" class="topic-btn" data-tag="rant">
+            <div class="icon-box"><img src="/images/fire.webp" alt="Fire" width="30"></div>
+            <p>Rant</p>
           </a>
         
-          <a href="#" class="topic-btn">
-            <div class="icon-box">
-              <img src="../assets/images/pizza.svg" alt="Pizza slice" width="30">
-            </div>
-            <p>RECIPES?</p>
+          <a href="#" class="topic-btn" data-tag="food">
+            <div class="icon-box"><img src="/images/pizza.svg" alt="Pizza slice" width="30"></div>
+            <p>Food</p>
           </a>
       </div>
 
@@ -173,7 +140,8 @@
 
                 <li>
                   <a href="#" class="icon-box instagram">
-                    <ion-icon name="logo-instagram"></ion-icon>                  </a>
+                    <ion-icon name="logo-instagram"></ion-icon>               
+                  </a>
                 </li>
               </ul>
             </div>
@@ -185,13 +153,11 @@
           <p>
           Get an email when i've posted a new story.
           </p>
-    
           <form action="#">
           <input type="email" name="email" placeholder="Email Address" required>
             <button type="submit" class="btn btn-primary">Subscribe</button>
           </form>
             </div>
-
           </div>
         </div>
       </div>
@@ -202,8 +168,8 @@
   <footer>
     <div class="container">
       <div class="wrapper">
-        <a href="#" class="footer-logo">
-          <img src="../assets/images/front_logo_machu.jpg" alt="Machu Pichu" width="150" class="logo">
+        <a href="index.html" class="footer-logo">
+          <img src="/images/front_logo_machu.jpg" alt="Machu Pichu" width="150" class="logo">
         </a>
       </div>
       <div class="footer-text">
@@ -211,25 +177,41 @@
         everything you have, your dreams, what you can do and 
         where you are going.
       </p>
+      </div>
     </div>
-    </div>
-
     <p class="copyright">
       &copy; Copyright 2025 Fakey</a>
     </p>
   </footer>
 
+  <!-- Like button -->
   <div class="like-wrapper">
     <button class="like-button">
-      <img src="../assets/images/heart.svg" alt="Like buttom" width="30">
+      <img src="/images/heart.svg" alt="Like buttom" width="30">
     </button>
     <div class="like-count"><p id="likeCount"></p></div>
   </div>
 
-  <script src="js/main.js"></script>
+  <!-- Login popup -->
+  <div class="login-popup" id="loginPopup">
+    <div class="login-container">
+      <h2>Login</h2>
+      <form id="loginForm">
+        <label for="username">Username:</label>
+        <input type="text" id="username" name="username" required>
+        <label for="password">Password:</label>
+        <input type="text" id="password" name="password" required>
+        <button type="submit" class="btn btn-primary">Login</button>
+        <button type="submit" class="btn btn-secondary" id="closeLogin">Close</button>
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="js/api.js"></script>
+  <script type="module" src="js/main.js"></script>
 
   <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
   <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
-</body>
 
+</body>
 </html>
