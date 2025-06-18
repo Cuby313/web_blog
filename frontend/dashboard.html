@@ -17,8 +17,8 @@
   <header>
     <div class="container">
       <nav class="navbar">
-        <a href="#">
-          <img src="../assets/images/front_logo_machu.jpg" alt="Blog Logo" width="150" class="logo">
+        <a href="index.html">
+          <img src="/images/front_logo_machu.jpg" alt="Blog Logo" width="150" class="logo">
         </a>
         <h1>Admin's Dashboard</h1>
       </div>
@@ -64,6 +64,16 @@
           </div>
 
           <div class="form-group">
+            <label for="post-tags">Tags (comma-separated)</label>
+            <input 
+              type="text" 
+              id="post-tags" 
+              name="tags" 
+              placeholder="e.g. recipe,yummy,food"
+            > 
+          </div>
+          
+          <div class="form-group">
             <label for="song-link">Song of the Day (YouTube URL)</label>
             <input 
               type="url" 
@@ -82,7 +92,7 @@
           </div>
 
           <div class="form-actions">
-            <button type="button" class="btn btn-secondary" onclick="resetForm()">Cancel</button>
+            <button type="button" class="btn btn-secondary" onclick="window.location.href='index.html'">Cancel</button>
             <button type="submit" class="btn btn-primary">Save Post</button>
           </div>
         </form>
@@ -95,8 +105,8 @@
   <footer>
     <div class="container">
       <div class="wrapper">
-        <a href="#" class="footer-logo">
-          <img src="../assets/images/front_logo_machu.jpg" alt="Machu Pichu" width="150" class="logo">
+        <a href="index.html" class="footer-logo">
+          <img src="/images/front_logo_machu.jpg" alt="Machu Pichu" width="150" class="logo">
         </a>
       </div>
       <div class="footer-text">
@@ -112,11 +122,11 @@
     </p>
   </footer>
 
-  <script src="js/main.js"></script>
+  <script type="module" src="js/api.js"></script>
+  <script type="module" src="js/main.js"></script>
 
   <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
   <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
 
 </body>
-
 </html>

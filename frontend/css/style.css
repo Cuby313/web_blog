@@ -135,7 +135,7 @@ html {
 \*-----------------------------------*/
 
 header { 
-  background-image: url('../../assets/images/header.png');
+  background-image: url('/images/header.png');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -954,6 +954,20 @@ footer .footer-text {grid-column: 3;}
 
   .topic-btn:hover .icon-box {
     background: var(--accent);
+    color: var(--white);
+  }
+
+  .topic-btn.active {
+    background: var(--accent);
+    color: var(--white);
+  }
+  
+  .topic-btn.active .icon-box {
+    background: var(--accent);
+    color: var(--white);
+  }
+
+  .topic-btn.active p {
     color: var(--white);
   }
 
