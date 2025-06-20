@@ -84,6 +84,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  /*
   // Creates post form (only dashboard)
   if (createPostForm) {
     createPostForm.addEventListener('submit', async(e) => {
@@ -99,7 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error('Error while creating post:', error);
       }
     });
-  }
+  }*/
 
   // Add a new post to the DOM (for index.html)
   function addNewPostToDOM(post) {

@@ -5,6 +5,7 @@ Purpose: Initilize the server, load environment variables,
 start listening 
 */
 
+//require('dotenv').config();
 import express from 'express';
 import path from 'path';
 import cors from 'cors';
