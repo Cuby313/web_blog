@@ -5,7 +5,6 @@ calls to user interactions.
 
 document.addEventListener('DOMContentLoaded', () => {
   const loginForm = document.getElementById('loginForm');
-  const createPostForm = document.getElementById('createPostForm');
   const blogCardGroup = document.querySelector('.blog-card-group');
   const likeButton = document.querySelector('.like-button');
   const likeCount = document.getElementById('likeCount');
@@ -84,46 +83,33 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  /*
-  // Creates post form (only dashboard)
-  if (createPostForm) {
-    createPostForm.addEventListener('submit', async(e) => {
-      e.preventDefault();
-      const title = document.getElementById('title').value;
-      const content = document.getElementById('content').value;
-      try { 
-        const result = await api.createPost({ title, content });
-        console.log('Post created:', result);
-        addNewPostToDOM(result);
-        createPostForm.reset();
-      } catch (error) {
-        console.error('Error while creating post:', error);
-      }
-    });
-  }*/
-
   // Add a new post to the DOM (for index.html)
   function addNewPostToDOM(post) {
     if (!blogCardGroup) {
       console.error('blog-card-group element not found');
       return;
     }
+
+    const maxLength = 200;
+    let preview = post.content || '';
+    if (preview.length > maxLength) {
+      preview = preview.slice(0, maxLength).trimEnd().concat('…');
+    }
+
     const blogCard = document.createElement('div');
     blogCard.className = 'blog-card';
     blogCard.dataset.tags = (post.tags || []).join(',');
-    const tagLabel = (post.tags && post.tags.length > 0)
-      ? post.tags[0]
-      : 'BLOG';
+    const tagLabel = (post.tags && post.tags.length > 0) ? post.tags[0] : 'BLOG';
     
     blogCard.innerHTML = `
       <div class="blog-card-banner">
-        <img src="${post.image || '/frontend/images/front_logo_machu.jpg'}" alt="Blog image" width="250" class="blog-banner-img">
+        <img src="${post.image || '/images/front_logo_machu.jpg'}" alt="Blog image" width="250" class="blog-banner-img">
       </div>
       <div class="blog-content-wrapper">
         <button class="blog-topic text-tiny">${post.song ? 'SONG' : 'BLOG'}</button>
         <button class="blog-topic text-tiny">${tagLabel}</button>
         <h3 class="h3"><a href="post.html?id=${post.id}">${post.title}</a></h3>
-        <p class="blog-text">${post.content}</p>
+        <p class="blog-text">${preview}</p>
         <div class="wrapper-flex">
           <div class="wrapper">
             <p class="text-sm"><time datetime="${post.createdAt ? post.createdAt.split('T')[0] : ''}">${post.createdAt ? new Date(post.createdAt).toLocaleDateString() : ''}</time></p>
@@ -254,11 +240,19 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const posts = await api.getPosts();
       console.log('Fetched posts:', posts);
-      // Clear existing posts to prevent duplicates
       blogCardGroup.innerHTML = '';
-      // Sort by createdAt descending
       posts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-      posts.forEach(post => addNewPostToDOM(post));
+      const filteredPosts = currentTag ? posts.filter(post => (post.tags || []). 
+      includes(currentTag)) : posts; 
+      const initialPosts = posts.slice(0, POSTS_PER_PAGE);
+      initialPosts.forEach(post => addNewPostToDOM(post));
+      if (filteredPosts.length <= POSTS_PER_PAGE) {
+        loadMoreBtn.disabled = true;
+        loadMoreBtn.textContent = 'No more posts';
+      } else {
+        loadMoreBtn.disabled = false;
+        loadMoreBtn.textContent = 'Load more';
+      }
     } catch (error) {
       console.error('Error while loading posts:', error);
     }
@@ -320,6 +314,8 @@ document.addEventListener('DOMContentLoaded', () => {
           currentTag = tag;
           filterByTag(tag);
         }
+        currentPageNum = 1;
+        loadInitialPosts();
       });
     });
   } 
@@ -352,15 +348,24 @@ document.addEventListener('DOMContentLoaded', () => {
   const POSTS_PER_PAGE = 5;
 
   async function loadMorePosts() {
-    currentPageNum++;
     try {
-      const all = await api.getPosts();
-      console.log('Load more posts:', all);
-      const nextPosts = all.slice((currentPageNum-1)*POSTS_PER_PAGE, currentPageNum*POSTS_PER_PAGE);
-      nextPosts.forEach(addNewPostToDOM);
-      if (currentPageNum * POSTS_PER_PAGE >= all.length) {
+      const allPosts = await api.getPosts();
+      console.log('Load more posts:', allPosts);
+      // Sort by createdAt descending 
+      allPosts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      const filteredPosts = currentTag ? allPosts.filter(post => (post.tags || []).
+      includes(currentTag)) : allPosts;
+      const startIndex = currentPageNum * POSTS_PER_PAGE;
+      const nextPosts = filteredPosts.slice(startIndex, startIndex + POSTS_PER_PAGE);
+      nextPosts.forEach(post => addNewPostToDOM(post));
+      currentPageNum++;
+
+      if (startIndex + POSTS_PER_PAGE >= filteredPosts.length) {
         loadMoreBtn.disabled = true;
         loadMoreBtn.textContent = 'No more posts';
+      } else {
+        loadMoreBtn.disabled = false;
+        loadMoreBtn.textContent = 'Load more';
       }
     } catch (error) {
       console.error('Error while loading more posts:', error);
