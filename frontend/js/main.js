@@ -1,9 +1,13 @@
-/* 
-Handles DOM (document object model) manipulation and event listeners. Connect API
-calls to user interactions.
-*/ 
+/**
+ * Handles DOM manipulation and event listeners: Connects API calls to user
+ * interactions for login, post display, and post creation.
+ *
+ * Features: Responsive navigation, post rendering with Cloudinary images,
+ * pagination, and YouTube song previews.
+ */
 
 document.addEventListener('DOMContentLoaded', () => {
+  // DOM elements
   const loginForm = document.getElementById('loginForm');
   const blogCardGroup = document.querySelector('.blog-card-group');
   const likeButton = document.querySelector('.like-button');
@@ -21,15 +25,17 @@ document.addEventListener('DOMContentLoaded', () => {
   const songPreview = document.getElementById('song-preview');
   const blogEditorForm = document.getElementById('blog-editor-form');
   const blogPost = document.querySelector('.blog-post');
+  const loadMoreBtn = document.querySelector('.load-more');
 
-  // Mobile navigation menu functionality
+
+  // Mobile navigation toggle
   if (navMenuBtn && navCloseBtn && nav) {
-    const navToggleFunc = () => { nav.classList.toggle('active'); };
+    const navToggleFunc = () => nav.classList.toggle('active');
     navMenuBtn.addEventListener('click', navToggleFunc);
     navCloseBtn.addEventListener('click', navToggleFunc);
   }
 
-  // Login popup
+  // Login popup toggle
   if (loginBtn) {
     loginBtn.addEventListener('click', (e) => {
       e.preventDefault();
@@ -38,7 +44,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
-
   if (mobileLoginBtn) {
     mobileLoginBtn.addEventListener('click', (e) => {
       e.preventDefault();
@@ -47,35 +52,34 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
-
   if (closeLogin && loginPopup) {
     closeLogin.addEventListener('click', () => {
       loginPopup.classList.remove('active');
     });
   }
 
-  // Login form
+  // Login form submission
   if (loginForm) {
     loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const username = document.getElementById('username').value;
-      const password = document.getElementById('password').value;
-      
+      const username = document.getElementById('username')?.value;
+      const password = document.getElementById('password')?.value;
+      if (!username || !password) {
+        alert('Please enter both username and password');
+        return;
+      }
       try {
         const result = await api.login({ username, password });
-        console.log('Login result:', result);
-
-        if (result.token) {
+        if (result.success && result.token) {
           localStorage.setItem('token', result.token);
           window.location.href = 'dashboard.html';
         } else {
-          alert('Invalid username or password!');
+          alert(result.message || 'Invalid username or password');
         }
       } catch (error) {
         console.error('Login error:', error);
-        alert('Login failed. Please try again.');
+        alert('Login failed: ${error.message}');
       }
-
       loginForm.reset();
       if (loginPopup) {
         loginPopup.classList.remove('active');
@@ -89,12 +93,13 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('blog-card-group element not found');
       return;
     }
-
     const maxLength = 200;
     let preview = post.content || '';
     if (preview.length > maxLength) {
       preview = preview.slice(0, maxLength).trimEnd().concat('…');
     }
+    const fallbackImage = 'https://res.cloudinary.com/didhwj8j3/image/upload/v1750941449/front_logo_machu_k8wanc.png';
+    const imageSrc = post.image || fallbackImage;
 
     const blogCard = document.createElement('div');
     blogCard.className = 'blog-card';
@@ -103,7 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     blogCard.innerHTML = `
       <div class="blog-card-banner">
-        <img src="${post.image || '/images/front_logo_machu.jpg'}" alt="Blog image" width="250" class="blog-banner-img">
+        <img src="${imageSrc}" alt="Blog image" width="250" class="blog-banner-img">
       </div>
       <div class="blog-content-wrapper">
         <button class="blog-topic text-tiny">${post.song ? 'SONG' : 'BLOG'}</button>
@@ -129,16 +134,20 @@ document.addEventListener('DOMContentLoaded', () => {
       blogPost.innerHTML = '<p class="entry-content">Post not found.</p>';
       return;
     }
-
     try {
       const response = await fetch(`/api/posts/${postId}`);
-      if (!response.ok) throw new Error('Post not found');
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Post not found');
+      }
       const post = await response.json();
-
+      const fallbackImage = 'https://res.cloudinary.com/didhwj8j3/image/upload/v1750941449/front_logo_machu_k8wanc.png';
+      const imageSrc = post.image || fallbackImage;
+      
       blogPost.innerHTML = `
         ${post.image ? `
           <figure class="post-thumbnail">
-            <img src="${post.image}" alt="${post.title}" class="entry-image">
+            <img src="${imageSrc}" alt="${post.title}" class="entry-image">
           </figure>
         ` : ''}
         <h1 class="entry-title">${post.title}</h1>
@@ -163,33 +172,42 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
       `;
     } catch (error) {
-      blogPost.innerHTML = '<p class="entry-content">Failed to load post.</p>';
+      console.error('Error loading single post:', error);
+      blogPost.innerHTML = '<p class="entry-content">Failed to laod post: ${error.message}</p>';
     }
   }
 
-  // Dashboard
-  if (imageInput) {
+  // Dashboard: Image preview
+  if (imageInput && imagePreview) {
     imageInput.addEventListener('change', function() {
       const file = this.files[0];
       if (file) {
         const reader = new FileReader();
-        reader.onload = function(e) {
+        reader.onload = (e) => {
           imagePreview.src = e.target.result;
           imagePreview.style.display = 'block';
         };
         reader.readAsDataURL(file);
+      } else {
+        imagePreview.style.display = 'none';
       }
     });
   }
 
+  // Dashboard: Post creation
   if (blogEditorForm) {
     blogEditorForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const title = document.getElementById('post-title').value;
-      const content = document.getElementById('post-content').value;
-      const image = document.getElementById('post-image').files[0];
-      const song = document.getElementById('song-link').value;
-      const tags = document.getElementById('post-tags').value;
+      const title = document.getElementById('post-title')?.value;
+      const content = document.getElementById('post-content')?.value;
+      const image = document.getElementById('post-image')?.files[0];
+      const song = document.getElementById('song-link')?.value;
+      const tags = document.getElementById('post-tags')?.value;
+
+      if (!title || !content) {
+        alert('Title and content are required');
+        return;
+      }
 
       const formData = new FormData();
       formData.append('title', title);
@@ -200,19 +218,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
       try {
         const result = await api.createPost(formData);
-        alert('Post created!');
+        alert('Post created successfully!');
         blogEditorForm.reset();
         if (imagePreview) imagePreview.style.display = 'none';
         if (songPreview) songPreview.style.display = 'none';
         window.location.href = 'index.html';
       } catch (error) {
-        alert('Failed to create post');
+        console.error('Error creating post:', error);
+        alert('Failed to create post: ${error.message}');
       }
     });
   }
 
-  // YouTube thumbnail preview
-  if (songInput) {
+  // Dashboard: YouTube song preview
+  if (songInput && songPreview) {
     songInput.addEventListener('input', function() {
       const url = this.value;
       const videoId = extractYouTubeId(url);
@@ -225,6 +244,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Extract YouTube video ID from URL
   function extractYouTubeId(url) {
     const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
     const match = url.match(regex);
@@ -238,32 +258,35 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
     try {
-      const posts = await api.getPosts();
-      console.log('Fetched posts:', posts);
+      const data = await api.getPosts(1, currentTag);
       blogCardGroup.innerHTML = '';
-      posts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-      const filteredPosts = currentTag ? posts.filter(post => (post.tags || []).includes(currentTag)) : posts; 
-      const initialPosts = filteredPosts.slice(0, POSTS_PER_PAGE);
-      initialPosts.forEach(post => addNewPostToDOM(post));
-      if (filteredPosts.length <= POSTS_PER_PAGE) {
-        loadMoreBtn.disabled = true;
-        loadMoreBtn.textContent = 'No more posts';
+      if (data.posts && data.posts.length > 0) {
+        data.posts.forEach(post => addNewPostToDOM(post));
       } else {
-        loadMoreBtn.disabled = false;
-        loadMoreBtn.textContent = 'Load more';
+        blogCardGroup.innerHTML = '';
+      }
+      if (!data.hasMore) {
+        if (loadMoreBtn) {
+          loadMoreBtn.disabled = true;
+          loadMoreBtn.textContent = 'No more posts';
+        }
+      } else {
+        if (loadMoreBtn) {
+          loadMoreBtn.disabled = false;
+          loadMoreBtn.textContent = 'Load more';
+        }
       }
     } catch (error) {
       console.error('Error while loading posts:', error);
+      blogCardGroup.innerHTML = '<p>Failed to load posts: ${error.message}</p>';
     }
   }
 
   // Like button functionality
   if (likeButton && likeCount) {
-    let stored = localStorage.getItem('pageLikes');
-    let likes = stored !== null ? parseInt(stored, 10) : 0;
-    let hasLiked = localStorage.getItem('hasLiked') == 'true';
-
-    likeCount.textContent = String(likes);
+    let likes = parseInt(localStorage.getItem('pageLikes') || '0', 10);
+    let hasLiked = localStorage.getItem('hasLiked') === 'true';
+    likeCount.textContent = likes.toString();
 
     if (hasLiked) {
       likeButton.classList.add('liked');
@@ -273,18 +296,16 @@ document.addEventListener('DOMContentLoaded', () => {
     likeButton.addEventListener('click', () => {
       if (!hasLiked) {
         likes += 1;
-        likeCount.textContent = likes;
+        likeCount.textContent = likes.toString();
         likeButton.classList.add('liked');
         likeButton.disabled = true;
-        
         localStorage.setItem('pageLikes', likes);
         localStorage.setItem('hasLiked', 'true');
-
-        console.log('Page liked! Total likes:', likes);
       }
     });
   }
 
+  // Reset dashboard form
   function resetForm() {
     if (blogEditorForm) {
       blogEditorForm.reset();
@@ -294,15 +315,13 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   window.resetForm = resetForm; 
 
+  // Topic filtering
   let currentTag = null;
-
   function initializeTopicFilters() {
     document.querySelectorAll('.topic-btn').forEach(btn => {
       btn.addEventListener('click', e => {
         e.preventDefault();
         const tag = btn.dataset.tag;
-
-        // If clicking the same tag, deselect it and show all posts
         if (currentTag === tag) {
           currentTag = null;
           btn.classList.remove('active');
@@ -322,15 +341,11 @@ document.addEventListener('DOMContentLoaded', () => {
   function filterByTag(tag) {
     document.querySelectorAll('.blog-card').forEach(card => {
       const tags = (card.dataset.tags || '').split(',').map(t => t.trim());
-      if (tag === 'all' || tags.includes(tag)) {
-        card.style.display = '';
-      } else {
-        card.style.display = 'none';
-      }
+      card.style.display = tag === 'all' || tags.includes(tag) ? '' : 'none';
     });
   }
 
-  // Initialize based on page
+  // Load posts or single post based on page
   const currentPage = window.location.pathname.split('/').pop() || 'index.html';
   if (currentPage === 'index.html' && blogCardGroup) {
     loadInitialPosts().then(() => {
@@ -339,39 +354,33 @@ document.addEventListener('DOMContentLoaded', () => {
   } else if (currentPage === 'post.html' && blogPost) {
     loadSinglePost();
   } else if (currentPage === 'dashboard.html') {
-    console.log('Dashboard page loaded, initializing form');
+    console.log('Dashboard page loaded');
   }
 
-  const loadMoreBtn = document.querySelector('.load-more');
+  // Load more posts
   let currentPageNum = 1;
   const POSTS_PER_PAGE = 5;
-
-  async function loadMorePosts() {
-    try {
-      const allPosts = await api.getPosts();
-      console.log('Load more posts:', allPosts);
-      // Sort by createdAt descending 
-      allPosts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-      const filteredPosts = currentTag ? allPosts.filter(post => (post.tags || []).
-      includes(currentTag)) : allPosts;
-      const startIndex = currentPageNum * POSTS_PER_PAGE;
-      const nextPosts = filteredPosts.slice(startIndex, startIndex + POSTS_PER_PAGE);
-      nextPosts.forEach(post => addNewPostToDOM(post));
-      currentPageNum++;
-
-      if (startIndex + POSTS_PER_PAGE >= filteredPosts.length) {
-        loadMoreBtn.disabled = true;
-        loadMoreBtn.textContent = 'No more posts';
-      } else {
-        loadMoreBtn.disabled = false;
-        loadMoreBtn.textContent = 'Load more';
-      }
-    } catch (error) {
-      console.error('Error while loading more posts:', error);
-    }
-  }
-
   if (loadMoreBtn) {
-    loadMoreBtn.addEventListener('click', loadMorePosts);
+    loadMoreBtn.addEventListener('click', async () => {
+      try {
+        const data = await api.getPosts(currentPageNum + 1, currentTag);
+        if (data.posts && data.posts.length > 0) {
+          data.posts.forEach(post => addNewPostToDOM(post));
+        } 
+        currentPageNum++;
+        if (!data.hasMore) {
+          loadMoreBtn.disabled = true;
+          loadMoreBtn.textContent = 'No more posts';
+        } else {
+          loadMoreBtn.disabled = false;
+          loadMoreBtn.textContent = 'Load more';
+        }
+      } catch (error) {
+        console.error('Error loading more posts:', error);
+        if (loadMoreBtn) {
+          loadMoreBtn.textContent = 'Error: ${error.message}';
+        }
+      }
+    })
   }
 });
