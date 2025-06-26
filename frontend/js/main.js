@@ -242,9 +242,8 @@ document.addEventListener('DOMContentLoaded', () => {
       console.log('Fetched posts:', posts);
       blogCardGroup.innerHTML = '';
       posts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-      const filteredPosts = currentTag ? posts.filter(post => (post.tags || []). 
-      includes(currentTag)) : posts; 
-      const initialPosts = posts.slice(0, POSTS_PER_PAGE);
+      const filteredPosts = currentTag ? posts.filter(post => (post.tags || []).includes(currentTag)) : posts; 
+      const initialPosts = filteredPosts.slice(0, POSTS_PER_PAGE);
       initialPosts.forEach(post => addNewPostToDOM(post));
       if (filteredPosts.length <= POSTS_PER_PAGE) {
         loadMoreBtn.disabled = true;

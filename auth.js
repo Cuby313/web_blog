@@ -1,45 +1,50 @@
 /* 
-Handles login, signup and logout for author
+Handles user authentication (login and signup)
 */
 
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { MongoClient } from 'mongodb';
 
 const router = Router();
+const uri = process.env.MONGO_URI;
+const client = new MongoClient(uri);
+let usersCollection;
+
+async function connectDB() {
+  await client.connect();
+  const db = client.db('blogdb');
+  usersCollection = db.collection('users');
+  const admin = await usersCollection.findOne({ username: process.env.ADMIN_USERNAME });
+  if (!admin) {
+    const passwordHash = bcrypt.hashSync(process.env.ADMIN_PASSWORD, 8);
+    await usersCollection.insertOne({
+      id: 1,
+      username: process.env.ADMIN_USERNAME,
+      passwordHash
+    });
+  }
+}
+connectDB().catch(console.error);
 
 // Load admin credentials from environment variables
 const getEnvVars = () => {
   const JWT_SECRET = process.env.JWT_SECRET;
   const ADMIN_USERNAME = process.env.ADMIN_USERNAME;
   const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
-
   if (!ADMIN_USERNAME || !ADMIN_PASSWORD || !JWT_SECRET) {
-    console.error('Missing required environment variables: ADMIN_USERNAME, ADMIN_PASSWORD, or JWT_SECRET');
+    console.error('Missing required environment variables');
   }
-
   return { JWT_SECRET, ADMIN_USERNAME, ADMIN_PASSWORD };
 };
-
-// Initialize users array with hashed password
-let users = [];
-try {
-  const { ADMIN_USERNAME, ADMIN_PASSWORD, JWT_SECRET } = getEnvVars();
-  const passwordHash = bcrypt.hashSync(ADMIN_PASSWORD, 8);
-  users = [{ id: 1, username: ADMIN_USERNAME, passwordHash }];
-} catch (error) {
-  console.error(error.message);
-  process.exit(1);
-}
 
 // POST /api/auth/login
 router.post('/login', async (req, res) => {
   try {
-    // Logic for author login
     const { username, password } = req.body;
-    // Validate and authenticate
     const { JWT_SECRET } = getEnvVars();
-    const user = users.find((u) => u.username === username);
+    const user = await usersCollection.findOne({ username });
     if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
@@ -49,10 +54,9 @@ router.post('/login', async (req, res) => {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
-  
+
 router.post('/signup', (req, res) => {
-  // Logic for author signup
-  res.json({ message: 'Signup route' });
+  res.status(404).json({ message: 'Signup not supported' });
 });
-  
+    
 export default router;

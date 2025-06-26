@@ -1,6 +1,6 @@
 /* 
-Handles communication between frontend and beckend. Fetch
-posts, submit login/signup, create posts...
+Handles communication between frontend and beckend 
+(login, get posts, create posts)
 */
 
 ;(function() {
@@ -8,9 +8,9 @@ posts, submit login/signup, create posts...
 
   async function login({ username, password }) {
     const res = await fetch(`${API_BASE}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password })
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password })
     });
     if (res.ok) {
       const { token } = await res.json();
@@ -22,8 +22,9 @@ posts, submit login/signup, create posts...
     }
   }
 
-  async function getPosts() {
-    const res = await fetch(`${API_BASE}/posts`);
+  async function getPosts(page = 1, tag = null) {
+    const url = tag ? `${API_BASE}/posts?page=${page}&tag=${encodeURIComponent(tag)}` : `${API_BASE}/posts?page=${page}`;
+    const res = await fetch(url);
     if (!res.ok) throw new Error('Could not load posts');
     return res.json();
   }

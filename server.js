@@ -1,8 +1,8 @@
 /*
 Main backend file (starts server and connects routes)
 
-Purpose: Initilize the server, load environment variables, 
-start listening 
+Purpose: Initialize the Express server, load environment variables, 
+sets up middleware and connects routes 
 */
 
 import express from 'express';
@@ -24,7 +24,6 @@ app.use(express.json());
 
 // Static front-end
 app.use('/', express.static(path.join(__dirname, 'frontend')));
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // API routes
 app.use('/api/auth', authRouter);
