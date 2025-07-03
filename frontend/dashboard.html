@@ -1,104 +1,69 @@
-<!-- Author management of posts -->
+<!-- Admin dashboard-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mike Tyson's Dashboard</title>
+  <title>Mike Tyson | Dashboard</title>
   <link rel="stylesheet" href="css/style.css">
-  <script type="module" src="js/api.js"></script>
-  <script type="module" src="js/main.js"></script>
-  <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
-  <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
+  <script src="api.js" defer></script>
+  <script src="main.js" defer></script>
+  <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+  <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
 </head>
-<body class="main"> 
+<body class="main">
   <!-- Header (menu) -->
   <header>
     <div class="container">
       <nav class="navbar">
-        <a href="index.html">
+        <a href="dashboard.html">
           <img src="https://res.cloudinary.com/didhwj8j3/image/upload/v1750941449/front_logo_machu_k8wanc.png" alt="Blog Logo" width="150" class="logo">
         </a>
-        <h1>Admin's Dashboard</h1>
-      </nav>
-    </div>
+
+        <div class="btn-group">
+          <button class="nav-menu-btn">
+            <ion-icon name="menu-outline"></ion-icon>
+          </button>
+        </div>
+
+        <div class="flex-wrapper">
+          <ul class="desktop-nav">
+            <li><a href="index.html" class="nav-link">Home</a></li>
+            <li><a href="about.html" class="nav-link">About Me</a></li>
+            <li><a href="contact.html" class="nav-link">Contact</a></li>
+            <li><a href="#" class="nav-link logout-btn">Logout</a></li>
+          </ul>
+        </div>
+
+      <div class="mobile-nav">
+        <button class="nav-close-btn">
+          <ion-icon name="close-outline"></ion-icon>
+        </button>
+
+        <div class="wrapper">
+          <p class="nav-title">Main Menu</p>
+          <ul>
+            <li class="nav-item"><a href="index.html" class="nav-link">Home</a></li>
+            <li class="nav-item"><a href="about.html" class="nav-link">About Me</a></li>
+            <li class="nav-item"><a href="contact.html" class="nav-link">Contact</a></li>
+            <li class="nav-item"><a href="#" class="nav-link" id="mobileLogoutBtn">Logout</a></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
   </header>
 
-  <!-- Editor dashboard -->
   <main>
-    <div class="blog-post" id="blog-post">
-      <div class="editor-form-container">
-        <form id="blog-editor-form" class="editor-form">
-          <div class="form-group">
-            <label for="post-title">Blog Title</label>
-            <input 
-              type="text" 
-              id="post-title" 
-              name="title" 
-              placeholder="Enter blog title" 
-              required
-            >
-          </div>
-
-          <div class="form-group">
-            <label for="post-image">Featured Image</label>
-            <input 
-              type="file" 
-              id="post-image" 
-              name="image" 
-              accept="image/*"
-            >
-            <img id="image-preview" class="image-preview" alt="Image preview">
-          </div>
-
-          <div class="form-group">
-            <label for="post-content">Content</label>
-            <textarea 
-              id="post-content" 
-              name="content" 
-              rows="10" 
-              placeholder="Write your blog post here..."
-              required
-            ></textarea>
-          </div>
-
-          <div class="form-group">
-            <label for="post-tags">Tags (comma-separated)</label>
-            <input 
-              type="text" 
-              id="post-tags" 
-              name="tags" 
-              placeholder="e.g. recipe,yummy,food"
-            > 
-          </div>
-          
-          <div class="form-group">
-            <label for="song-link">Song of the Day (YouTube URL)</label>
-            <input 
-              type="url" 
-              id="song-link" 
-              name="song" 
-              placeholder="Enter YouTube URL"
-            >
-            <div class="song-preview-container">
-              <img id="song-preview" class="song-preview" alt="Song thumbnail">
-              <div class="play-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
-                  <path d="M8 5v14l11-7z"/>
-                </svg>
-              </div>
-            </div>
-          </div>
-
-          <div class="form-actions">
-            <button type="button" class="btn btn-secondary" onclick="window.location.href='index.html'">Cancel</button>
-            <button type="submit" class="btn btn-primary">Save Post</button>
-          </div>
-        </form>
-      </div>
+    <div class="container">
+      <section class="blog">
+        <h2 class="h2">Admin Dashboard</h2>
+        <div class="search-bar">
+          <input type="text" id="post-search" placeholder="Search posts by title or content">
+          <button class="btn btn-primary" id="create-new-post">Create New Post</button>
+        </div>
+        <div class="blog-card-group" id="post-list"></div>
+      </section>
     </div>
-    <div class="space-post-footer"></div>
   </main>
 
   <!-- Footer -->
@@ -110,15 +75,14 @@
         </a>
       </div>
       <div class="footer-text">
-        <p>Don't forget to never tell anyone
-          everything you have, your dreams, what you can do and 
-          where you are going.
-        </p>
+      <p>Don't forget to never tell anyone
+        everything you have, your dreams, what you can do and 
+        where you are going.
+      </p>
       </div>
     </div>
-
     <p class="copyright">
-      <a href="https://github.com/Cuby313">&copy; Copyright 2025 Cuby313</a>
+      &copy; Copyright 2025 <a href="https://github.com/Cuby313">Cuby313</a>
     </p>
   </footer>
 </body>
