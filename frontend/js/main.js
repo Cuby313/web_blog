@@ -1,9 +1,9 @@
 /**
  * Handles DOM manipulation and event listeners: Connects API calls to user
- * interactions for login, post display, and post creation.
+ * interactions for login, post display and post creation.
  *
  * Features: Responsive navigation, post rendering with Cloudinary images,
- * pagination, and YouTube song previews.
+ * pagination, YouTube song previews and multiple image uploads.
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -20,13 +20,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const loginPopup = document.getElementById('loginPopup');
   const closeLogin = document.getElementById('closeLogin');
   const imageInput = document.getElementById('post-image');
-  const imagePreview = document.getElementById('image-preview');
+  const imagePreviewContainer = document.getElementById('image-preview-container');
   const songInput = document.getElementById('song-link');
   const songPreview = document.getElementById('song-preview');
   const blogEditorForm = document.getElementById('blog-editor-form');
   const blogPost = document.querySelector('.blog-post');
   const loadMoreBtn = document.querySelector('.load-more');
-
 
   // Mobile navigation toggle
   if (navMenuBtn && navCloseBtn && nav) {
@@ -78,7 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       } catch (error) {
         console.error('Login error:', error);
-        alert('Login failed: ${error.message}');
+        alert(`Login failed: ${error.message}`);
       }
       loginForm.reset();
       if (loginPopup) {
@@ -99,7 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
       preview = preview.slice(0, maxLength).trimEnd().concat('…');
     }
     const fallbackImage = 'https://res.cloudinary.com/didhwj8j3/image/upload/v1750941449/front_logo_machu_k8wanc.png';
-    const imageSrc = post.image || fallbackImage;
+    const imageSrc = (post.images && post.images.length > 0) ? post.images[0] : fallbackImage;
 
     const blogCard = document.createElement('div');
     blogCard.className = 'blog-card';
@@ -141,14 +140,16 @@ document.addEventListener('DOMContentLoaded', () => {
         throw new Error(error.message || 'Post not found');
       }
       const post = await response.json();
-      const fallbackImage = 'https://res.cloudinary.com/didhwj8j3/image/upload/v1750941449/front_logo_machu_k8wanc.png';
-      const imageSrc = post.image || fallbackImage;
       
       blogPost.innerHTML = `
-        ${post.image ? `
-          <figure class="post-thumbnail">
-            <img src="${imageSrc}" alt="${post.title}" class="entry-image">
-          </figure>
+        ${post.images && post.images.length > 0 ? `
+          <div class="post-carousel">
+            ${post.images.map((img, index) => `
+              <figure class="post-thumbnail">
+                <img src="${img}" alt="${post.title} image ${index + 1}" class="entry-image">
+              </figure>
+            `).join('')}
+          </div>
         ` : ''}
         <h1 class="entry-title">${post.title}</h1>
         <div class="entry-content">
@@ -173,23 +174,30 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
     } catch (error) {
       console.error('Error loading single post:', error);
-      blogPost.innerHTML = '<p class="entry-content">Failed to laod post: ${error.message}</p>';
+      blogPost.innerHTML = `<p class="entry-content">Failed to load post: ${error.message}</p>`;
     }
   }
 
-  // Dashboard: Image preview
-  if (imageInput && imagePreview) {
+  // Dashboard: Multiple image preview
+  if (imageInput && imagePreviewContainer) {
     imageInput.addEventListener('change', function() {
-      const file = this.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          imagePreview.src = e.target.result;
-          imagePreview.style.display = 'block';
-        };
-        reader.readAsDataURL(file);
+      imagePreviewContainer.innerHTML = '';
+      const files = this.files;
+      if (files && files.length > 0) {
+        Array.from(files).forEach((file, index) => {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const img = document.createElement('img');
+            img.src = e.target.result;
+            img.className = 'image-preview';
+            img.alt = `Preview ${index + 1}`;
+            imagePreviewContainer.appendChild(img);
+          };
+          reader.readAsDataURL(file);
+        });
+        imagePreviewContainer.style.display = 'block';
       } else {
-        imagePreview.style.display = 'none';
+        imagePreviewContainer.style.display = 'none';
       }
     });
   }
@@ -200,7 +208,7 @@ document.addEventListener('DOMContentLoaded', () => {
       e.preventDefault();
       const title = document.getElementById('post-title')?.value;
       const content = document.getElementById('post-content')?.value;
-      const image = document.getElementById('post-image')?.files[0];
+      const images = document.getElementById('post-image')?.files[0];
       const song = document.getElementById('song-link')?.value;
       const tags = document.getElementById('post-tags')?.value;
 
@@ -213,19 +221,21 @@ document.addEventListener('DOMContentLoaded', () => {
       formData.append('title', title);
       formData.append('content', content);
       if (tags) formData.append('tags', tags);
-      if (image) formData.append('image', image);
+      if (images) {
+        Array.from(images).forEach(image => formData.append('images', image));
+      }
       if (song) formData.append('song', song);
 
       try {
         const result = await api.createPost(formData);
         alert('Post created successfully!');
         blogEditorForm.reset();
-        if (imagePreview) imagePreview.style.display = 'none';
+        if (imagePreviewContainer) imagePreviewContainer.style.display = 'none';
         if (songPreview) songPreview.style.display = 'none';
         window.location.href = 'index.html';
       } catch (error) {
         console.error('Error creating post:', error);
-        alert('Failed to create post: ${error.message}');
+        alert(`Failed to create post: ${error.message}`);
       }
     });
   }
@@ -278,7 +288,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     } catch (error) {
       console.error('Error while loading posts:', error);
-      blogCardGroup.innerHTML = '<p>Failed to load posts: ${error.message}</p>';
+      blogCardGroup.innerHTML = `<p>Failed to load posts: ${error.message}</p>`;
     }
   }
 
@@ -378,7 +388,7 @@ document.addEventListener('DOMContentLoaded', () => {
       } catch (error) {
         console.error('Error loading more posts:', error);
         if (loadMoreBtn) {
-          loadMoreBtn.textContent = 'Error: ${error.message}';
+          loadMoreBtn.textContent = `Error: ${error.message}`;
         }
       }
     })
