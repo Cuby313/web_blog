@@ -305,6 +305,11 @@ header {
   color: var(--foreground-secondary);
 }
 
+.blog .dashboard-title {
+  text-align: center;
+  padding-left: 0;
+}
+
 .blog-card-group { margin-bottom: 3rem; }
 
 .blog-card {
@@ -771,6 +776,45 @@ footer .footer-text {grid-column: 3;}
 }
 
 /*-----------------------------------*\ 
+  #DASHBOARD HEADER
+\*-----------------------------------*/
+
+.dashboard-header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 1rem;
+  justify-content: center;
+}
+
+.search-bar {
+  flex-grow: 1;
+  max-width: 600px;
+}
+
+.search-bar input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--foreground-tertiary);
+  border-radius: 5px;
+  font-family: var(--body-font-family);
+  font-size: var(--fs-4);
+  color: var(--text-color);
+  background: var(--action-secondary);
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.search-bar input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px hsla(229, 76%, 66%, 0.2);
+}
+
+.search-bar input::placeholder {
+  color: var(--foreground-tertiary);
+}
+
+/*-----------------------------------*\ 
   #MEDIA QUERIES
 \*-----------------------------------*/
 
@@ -802,6 +846,11 @@ footer .footer-text {grid-column: 3;}
     text-align: left;
     padding-left: 2rem;
     color: var(--foreground-secondary);
+  }
+
+  .blog .dashboard-title {
+    text-align: center;
+    padding-left: 0;
   }
 
   .blog-text, .profile-wrapper { display: block; }
@@ -863,13 +912,19 @@ footer .footer-text {grid-column: 3;}
   }
 }
 
-/* Aside comes in action here*/
+/* Aside comes in action here */
 @media (min-width: 1024px) {
   :root { --fs-base: 1rem; --fs-1: 3rem; }
 
   .container { 
     max-width: 1150px; 
-    padding-top: 40px 30px;
+    padding: 40px 30px;
+  }
+
+  .main .dashboard-container {
+    display: block;
+    max-width: 1150px;
+    margin: 0 auto;
   }
 
   .navbar { justify-content: space-between; }
@@ -914,7 +969,7 @@ footer .footer-text {grid-column: 3;}
     display: block;
   }
 
-  .main .container {
+  .main .container:not(.dashboard-container) {
     display: grid;
     grid-template-columns: 5fr 2fr;
     gap: 60px;

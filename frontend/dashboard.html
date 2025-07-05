@@ -3,20 +3,21 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mike Tyson | Dashboard</title>
+  <title>Mike Tyson | Dashboard</title> 
   <link rel="stylesheet" href="css/style.css">
-  <script src="api.js" defer></script>
-  <script src="main.js" defer></script>
-  <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
-  <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+  <script type="module" src="js/api.js"></script>
+  <script type="module" src="js/main.js"></script>
+  <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
+  <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
 </head>
 <body class="main">
   <!-- Header (menu) -->
   <header>
     <div class="container">
       <nav class="navbar">
-        <a href="dashboard.html">
+        <a href="index.html">
           <img src="https://res.cloudinary.com/didhwj8j3/image/upload/v1750941449/front_logo_machu_k8wanc.png" alt="Blog Logo" width="150" class="logo">
         </a>
 
@@ -35,34 +36,37 @@
           </ul>
         </div>
 
-      <div class="mobile-nav">
-        <button class="nav-close-btn">
-          <ion-icon name="close-outline"></ion-icon>
-        </button>
+        <div class="mobile-nav">
+          <button class="nav-close-btn">
+            <ion-icon name="close-outline"></ion-icon>
+          </button>
 
-        <div class="wrapper">
-          <p class="nav-title">Main Menu</p>
-          <ul>
-            <li class="nav-item"><a href="index.html" class="nav-link">Home</a></li>
-            <li class="nav-item"><a href="about.html" class="nav-link">About Me</a></li>
-            <li class="nav-item"><a href="contact.html" class="nav-link">Contact</a></li>
-            <li class="nav-item"><a href="#" class="nav-link" id="mobileLogoutBtn">Logout</a></li>
-          </ul>
+          <div class="wrapper">
+            <p class="h3 nav-title">Main Menu</p>
+            <ul>
+              <li class="nav-item"><a href="index.html" class="nav-link">Home</a></li>
+              <li class="nav-item"><a href="about.html" class="nav-link">About Me</a></li>
+              <li class="nav-item"><a href="contact.html" class="nav-link">Contact</a></li>
+              <li class="nav-item"><a href="#" class="nav-link" id="mobileLogoutBtn">Logout</a></li>
+            </ul>
+          </div>
         </div>
-      </div>
-    </nav>
+      </nav>
+    </div>
   </header>
 
   <main>
-    <div class="container">
-      <section class="blog">
-        <h2 class="h2">Admin Dashboard</h2>
-        <div class="search-bar">
-          <input type="text" id="post-search" placeholder="Search posts by title or content">
+    <div class="container dashboard-container">
+      <div class="blog">
+        <h2 class="h2 dashboard-title">Admin Dashboard</h2>
+        <div class="dashboard-header">
+          <div class="search-bar">
+            <input type="text" id="post-search" placeholder="Search posts...">
+          </div>
           <button class="btn btn-primary" id="create-new-post">Create New Post</button>
         </div>
         <div class="blog-card-group" id="post-list"></div>
-      </section>
+      </div>
     </div>
   </main>
 
