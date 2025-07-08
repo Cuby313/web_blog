@@ -10,6 +10,7 @@ const selectedFiles = [];
 
 document.addEventListener('DOMContentLoaded', async () => {
   console.log('DOMContentLoaded fired, pathname:', window.location.pathname);
+
   // DOM elements
   const loginForm = document.getElementById('loginForm');
   const blogCardGroup = document.querySelector('.blog-card-group');
@@ -29,56 +30,80 @@ document.addEventListener('DOMContentLoaded', async () => {
   const blogEditorForm = document.getElementById('blog-editor-form');
   const blogPost = document.querySelector('.blog-post');
   const loadMoreBtn = document.querySelector('.load-more');
-  const postList = document.getElementById('post-list') || blogCardGroup;
+  const postList = document.getElementById('post-list');
   const searchInput = document.getElementById('post-search');
   const params = new URLSearchParams(location.search);
   const id = params.get('id');
 
-  // Fetch and populate the create new post form
-  if (id && blogEditorForm) {
-    const post = await api.getPost(id);
-    document.getElementById('post-title').value = post.title;
-    document.getElementById('post-content').value = post.content;
-    document.getElementById('post-tags').value = post.tags.join(',');
-    document.getElementById('song-link').value = post.songUrl;
-
-    const ctr = document.getElementById('image-preview-container');
-    post.images.forEach(url => {
-      const img = document.createElement('img');
-      img.src = url;
-      img.className = 'image-preview';
-      ctr.appendChild(img);
-    });
-
-    document.getElementById('blog-editor-form').onsubmit = async e => {
+  // Logout functionality
+  if (document.getElementById('logoutBtn')) {
+    document.getElementById('logoutBtn').addEventListener('click', (e) => {
       e.preventDefault();
-      const data = new FormData(e.target);
-      selectedFiles.forEach(f => data.append('images', f));
-      await api.updatePost(id, data);
-      location.href = 'dashboard.html';
-    };
+      localStorage.removeItem('token');
+      window.location.href = 'index.html';
+    });
+  }
+  if (document.getElementById('mobileLogoutBtn')) {
+    document.getElementById('mobileLogoutBtn').addEventListener('click', (e) => {
+      e.preventDefault();
+      localStorage.removeItem('token');
+      window.location.href = 'index.html';
+    });
   }
 
-  // Delete and update uploaded images in new post creation form
- function updatePreviews() {
-  const ctr = document.getElementById('image-preview-container');
-  ctr.innerHTML = '';
-  selectedFiles.forEach((file, idx) => {
-    const wrapper = document.createElement('div');
-    wrapper.className = 'preview-wrapper';
-    const img = document.createElement('img');
-    img.src = URL.createObjectURL(file);
-    img.className = 'image-preview';
-    wrapper.appendChild(img);
-    const del = document.createElement('button');
-    del.textContent = '×';
-    del.addEventListener('click', () => {
-      selectedFiles.splice(idx, 1);
-      updatePreviews();
+  // Fetch and populate the create/edit post form
+  if (id && blogEditorForm) {
+    try {
+      const post = await api.getPost(id);
+      document.getElementById('post-title').value = post.title || '';
+      document.getElementById('post-content').value = post.content || '';
+      document.getElementById('post-tags').value = post.tags?.join(',') || '';
+      document.getElementById('song-link').value = post.songUrl || '';
+      if (imagePreviewContainer && post.images) {
+        selectedFiles.length = 0;
+        post.images.forEach(url => selectedFiles.push(url));
+        updatePreviews();
+      }
+    } catch (error) {
+      console.error('Error fetching post for editing:', error);
+      alert(`Failed to load post: ${error.message}`);
+    }
+  }
+
+  // Multiple image preview and deletion
+  function updatePreviews() {
+    if (!imagePreviewContainer) return;
+    imagePreviewContainer.innerHTML = '';
+    selectedFiles.forEach((file, idx) => {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'preview-wrapper';
+      const img = document.createElement('img');
+      img.src = typeof file === 'string' ? file : URL.createObjectURL(file);
+      img.className = 'image-preview';
+      wrapper.appendChild(img);
+      const del = document.createElement('button');
+      del.textContent = '×';
+      del.className = 'delete-preview';
+      del.addEventListener('click', () => {
+        selectedFiles.splice(idx, 1);
+        updatePreviews();
+      });
+      wrapper.appendChild(del);
+      imagePreviewContainer.appendChild(wrapper);
     });
-    wrapper.appendChild(del);
-    ctr.appendChild(wrapper);
-   });
+    imagePreviewContainer.style.display = selectedFiles.length ? 'block' : 'none';
+  }
+
+  if (imageInput && imagePreviewContainer) {
+    imageInput.addEventListener('change', () => {
+      Array.from(imageInput.files).forEach(f => {
+        if (!selectedFiles.some(existing => typeof existing === 'string' ? existing === f.name : existing.name === f.name)) {
+          selectedFiles.push(f);
+        }
+      });
+      updatePreviews();
+      imageInput.value = '';
+    });
   }
 
   // Mobile navigation toggle
@@ -92,17 +117,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (loginBtn) {
     loginBtn.addEventListener('click', (e) => {
       e.preventDefault();
-      if (loginPopup) {
-        loginPopup.classList.add('active');
-      }
+      if (loginPopup) loginPopup.classList.add('active');
     });
   }
   if (mobileLoginBtn) {
     mobileLoginBtn.addEventListener('click', (e) => {
       e.preventDefault();
-      if (loginPopup) {
-        loginPopup.classList.add('active');
-      }
+      if (loginPopup) loginPopup.classList.add('active');
     });
   }
   if (closeLogin && loginPopup) {
@@ -134,16 +155,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         alert(`Login failed: ${error.message}`);
       }
       loginForm.reset();
-      if (loginPopup) {
-        loginPopup.classList.remove('active');
-      }
+      if (loginPopup) loginPopup.classList.remove('active');
     });
   }
 
-  // Add a new post to the DOM (for index.html)
-  function addNewPostToDOM(post) {
-    if (!blogCardGroup) {
-      console.error('blog-card-group element not found');
+  // Add a new post to the DOM (for index.html and dashboard.html)
+  function addNewPostToDOM(post, targetContainer) {
+    if (!targetContainer) {
+      console.error('No container (blog-card-group or post-list) found');
       return;
     }
     const maxLength = 200;
@@ -152,7 +171,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       preview = preview.slice(0, maxLength).trimEnd().concat('…');
     }
     const fallbackImage = 'https://res.cloudinary.com/didhwj8j3/image/upload/v1750941449/front_logo_machu_k8wanc.png';
-    const imageSrc = (post.image && Array.isArray(post.image) && post.image.length > 0) ? post.image[0] : (post.image || fallbackImage);
+    const imageSrc = (post.images && Array.isArray(post.images) && post.images.length > 0) ? post.images[0] : fallbackImage;
 
     const blogCard = document.createElement('div');
     blogCard.className = 'blog-card';
@@ -161,21 +180,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     blogCard.innerHTML = `
       <div class="blog-card-banner">
-        <img src="${imageSrc}" alt="Blog image" width="250" class="blog-banner-img">
+        <img src="${imageSrc}" alt="${post.title}" width="250" class="blog-banner-img">
       </div>
       <div class="blog-content-wrapper">
-        <button class="blog-topic text-tiny">${post.song ? 'SONG' : 'BLOG'}</button>
+        <button class="blog-topic text-tiny">${post.songUrl ? 'SONG' : 'BLOG'}</button>
         <button class="blog-topic text-tiny">${tagLabel}</button>
-        <h3 class="h3"><a href="post.html?id=${post.id}">${post.title}</a></h3>
+        <h3 class="h3"><a href="post.html?id=${post._id}">${post.title}</a></h3>
         <p class="blog-text">${preview}</p>
         <div class="wrapper-flex">
           <div class="wrapper">
             <p class="text-sm"><time datetime="${post.createdAt ? post.createdAt.split('T')[0] : ''}">${post.createdAt ? new Date(post.createdAt).toLocaleDateString() : ''}</time></p>
           </div>
         </div>
+        ${targetContainer === postList ? `
+          <button class="btn edit-post" data-id="${post._id}">Edit</button>
+          <button class="btn delete-post" data-id="${post._id}">Delete</button>
+        ` : ''}
       </div>
     `;
-    blogCardGroup.insertBefore(blogCard, blogCardGroup.firstChild);
+    targetContainer.insertBefore(blogCard, targetContainer.firstChild);
   }
 
   // Load single post for post.html
@@ -188,17 +211,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
     try {
-      const response = await fetch(`/api/posts/${postId}`);
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Post not found');
-      }
-      const post = await response.json();
-      
+      const post = await api.getPost(postId);
       blogPost.innerHTML = `
-        ${post.image && post.image.length > 0 ? `
+        ${post.images && Array.isArray(post.images) && post.images.length > 0 ? `
           <div class="post-carousel">
-            ${post.image.map((img, index) => `
+            ${post.images.map((img, index) => `
               <figure class="post-thumbnail">
                 <img src="${img}" alt="${post.title} image ${index + 1}" class="entry-image">
               </figure>
@@ -214,10 +231,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             ${post.tags.map(tag => `<span>#${tag}</span>`).join('')}
           </div>
         ` : ''}
-        ${post.song ? `
+        ${post.songUrl ? `
           <div class="song-preview-container">
-            <a href="${post.song}" target="_blank">
-              <img src="https://img.youtube.com/vi/${extractYouTubeId(post.song)}/maxresdefault.jpg" alt="Song preview" class="song-preview">
+            <a href="${post.songUrl}" target="_blank">
+              <img src="https://img.youtube.com/vi/${extractYouTubeId(post.songUrl)}/maxresdefault.jpg" alt="Song preview" class="song-preview">
               <ion-icon name="play" class="play-icon"></ion-icon>
             </a>
           </div>
@@ -232,26 +249,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  // Dashboard: Multiple image preview
-  if (imageInput && imagePreviewContainer) {
-    imageInput.addEventListener('change', () => {
-      Array.from(imageInput.files).forEach(f => {
-        if (!selectedFiles.includes(f)) selectedFiles.push(f);
-      });
-      updatePreviews();
-      imageInput.value = '';
-    });
-  }
-
-  // Dashboard: Post creation
+  // Dashboard: Post creation and editing
   if (blogEditorForm) {
     blogEditorForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const title = document.getElementById('post-title')?.value;
       const content = document.getElementById('post-content')?.value;
-      const files = Array.from(document.getElementById('post-image')?.files ||  []);
-      const song = document.getElementById('song-link')?.value;
       const tags = document.getElementById('post-tags')?.value;
+      const song = document.getElementById('song-link')?.value;
 
       if (!title || !content) {
         alert('Title and content are required');
@@ -261,22 +266,33 @@ document.addEventListener('DOMContentLoaded', async () => {
       const formData = new FormData();
       formData.append('title', title);
       formData.append('content', content);
-      if (files.length) {
-        files.forEach(file => formData.append('images', file));
-      }
+      selectedFiles.forEach(file => {
+        if (typeof file === 'string') {
+          formData.append('existingImages', file);
+        } else {
+          formData.append('images', file);
+        }
+      });
       if (tags) formData.append('tags', tags);
       if (song) formData.append('song', song);
 
       try {
-        const result = await api.createPost(formData);
-        alert('Post created successfully!');
+        const postId = params.get('id');
+        if (postId) {
+          await api.updatePost(postId, formData);
+          alert('Post updated successfully!');
+        } else {
+          await api.createPost(formData);
+          alert('Post created successfully!');
+        }
         blogEditorForm.reset();
-        if (imagePreviewContainer) imagePreviewContainer.style.display = 'none';
+        selectedFiles.length = 0;
+        updatePreviews();
         if (songPreview) songPreview.style.display = 'none';
-        window.location.href = 'index.html';
+        window.location.href = 'dashboard.html';
       } catch (error) {
-        console.error('Error creating post:', error);
-        alert(`Failed to create post: ${error.message}`);
+        console.error('Error saving post:', error);
+        alert(`Failed to save post: ${error.message}`);
       }
     });
   }
@@ -295,42 +311,65 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // Dashboard: Post listing, search- and delete/edit-functions
+  // Dashboard: Post listing, search, and delete/edit
   async function loadDashboardPosts(query = '') {
     if (!postList) return;
-    const { posts } = await api.getPosts();
-    const filtered = query 
-      ? posts.filter(p => p.title.includes(query) || p.content.includes(query))
-      : posts;
-    postList.innerHTML = '';
-    filtered.forEach(post => {
-      const card = document.createElement('div');
-      card.className = 'blog-card';
-      card.innerHTML = `
-        <img src="${post.imageUrl}" alt="${post.title}">
-        <h3>${post.title}</h3>
-        <p>${post.content.substring(0, 100)}...</p>
-        <p>Created: ${new Date(post.createdAt).toLocaleDateString()}</p>
-        ${post.updatedAt ? `<p>Updated: ${new Date(post.updatedAt).toLocaleDateString()}</p>` : ''}
-        <button class="btn edit-post" data-id="${post._id}">Edit</button>
-        <button class="btn delete-post" data-id="${post._id}">Delete</button>
-      `;
-      postList.appendChild(card);
-    });
+    try {
+      const { posts } = await api.getPosts();
+      postList.innerHTML = '';
+      const filtered = query 
+        ? posts.filter(p => 
+            p.title.toLowerCase().includes(query.toLowerCase()) || 
+            p.content.toLowerCase().includes(query.toLowerCase())
+          )
+        : posts;
+      if (filtered.length === 0) {
+        postList.innerHTML = '<p>No posts found.</p>';
+        return;
+      }
+      filtered.forEach(post => {
+        const card = document.createElement('div');
+        card.className = 'blog-card';
+        const imageSrc = (post.images && Array.isArray(post.images) && post.images.length > 0) 
+          ? post.images[0] 
+          : 'https://res.cloudinary.com/didhwj8j3/image/upload/v1750941449/front_logo_machu_k8wanc.png';
+        card.innerHTML = `
+          <div class="blog-card-banner">
+            <img src="${imageSrc}" alt="${post.title}" class="blog-banner-img">
+          </div>
+          <div class="blog-content-wrapper">
+            <h3 class="h3">${post.title}</h3>
+            <p class="blog-text">${post.content.substring(0, 100)}...</p>
+            <p class="text-sm">Created: ${new Date(post.createdAt).toLocaleDateString()}</p>
+            ${post.updatedAt ? `<p class="text-sm">Updated: ${new Date(post.updatedAt).toLocaleDateString()}</p>` : ''}
+            <button class="btn edit-post" data-id="${post._id}">Edit</button>
+            <button class="btn delete-post" data-id="${post._id}">Delete</button>
+          </div>
+        `;
+        postList.appendChild(card);
+      });
+    } catch (error) {
+      console.error('Error loading dashboard posts:', error);
+      postList.innerHTML = `<p>Failed to load posts: ${error.message}</p>`;
+    }
   }
 
   if (postList && searchInput) { 
     await loadDashboardPosts();
     searchInput.addEventListener('input', e => loadDashboardPosts(e.target.value));
-
     postList.addEventListener('click', async e => {
       const id = e.target.dataset.id;
       if (e.target.classList.contains('edit-post')) {
         window.location.href = `new_post.html?id=${id}`;
       } else if (e.target.classList.contains('delete-post')) {
         if (confirm('Are you sure you want to delete this post?')) {
-          await api.deletePost(id);
-          await loadDashboardPosts(searchInput.value);
+          try {
+            await api.deletePost(id);
+            await loadDashboardPosts(searchInput?.value || '');
+          } catch (error) {
+            console.error('Error deleting post:', error);
+            alert(`Failed to delete post: ${error.message}`);
+          }
         }
       }
     });
@@ -353,20 +392,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       const data = await api.getPosts(1, currentTag);
       blogCardGroup.innerHTML = '';
       if (data.posts && data.posts.length > 0) {
-        data.posts.forEach(post => addNewPostToDOM(post));
+        data.posts.forEach(post => addNewPostToDOM(post, blogCardGroup));
       } else {
-        blogCardGroup.innerHTML = '';
+        blogCardGroup.innerHTML = '<p>No posts available.</p>';
       }
-      if (!data.hasMore) {
-        if (loadMoreBtn) {
-          loadMoreBtn.disabled = true;
-          loadMoreBtn.textContent = 'No more posts';
-        }
-      } else {
-        if (loadMoreBtn) {
-          loadMoreBtn.disabled = false;
-          loadMoreBtn.textContent = 'Load more';
-        }
+      if (loadMoreBtn) {
+        loadMoreBtn.disabled = !data.hasMore;
+        loadMoreBtn.textContent = data.hasMore ? 'Load more' : 'No more posts';
       }
     } catch (error) {
       console.error('Error while loading posts:', error);
@@ -379,12 +411,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     let likes = parseInt(localStorage.getItem('pageLikes') || '0', 10);
     let hasLiked = localStorage.getItem('hasLiked') === 'true';
     likeCount.textContent = likes.toString();
-
     if (hasLiked) {
       likeButton.classList.add('liked');
       likeButton.disabled = true;
     }
-
     likeButton.addEventListener('click', () => {
       if (!hasLiked) {
         likes += 1;
@@ -401,11 +431,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   function resetForm() {
     if (blogEditorForm) {
       blogEditorForm.reset();
-      if (imagePreview) imagePreview.style.display = 'none';
+      selectedFiles.length = 0;
+      updatePreviews();
       if (songPreview) songPreview.style.display = 'none';
     }
   }
-  window.resetForm = resetForm; 
+  window.resetForm = resetForm;
 
   // Topic filtering
   let currentTag = null;
@@ -428,41 +459,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         loadInitialPosts();
       });
     });
-  } 
+  }
 
   function filterByTag(tag) {
     document.querySelectorAll('.blog-card').forEach(card => {
       const tags = (card.dataset.tags || '').split(',').map(t => t.trim());
       card.style.display = tag === 'all' || tags.includes(tag) ? '' : 'none';
-    });
-  }
-
-  // New post / edit functionality
-  if (blogEditorForm) {
-    const params = new URLSearchParams(window.location.search);
-    const postId = params.get('id');
-    if (postId) {
-      api.getPost(postId).then(post => {
-        document.getElementById('post-title').value = post.title;
-        document.getElementById('post-content').value = post.content;
-        document.getElementById('post-tags').value = post.tags.join(',');
-      });
-    }
-
-    blogEditorForm.addEventListener('submit', async e => {
-      e.preventDefault();
-      const data = {
-        title: document.getElementById('post-title').value,
-        content: document.getElementById('post-content').value,
-        tags: document.getElementById('post-tags').value.split(',').map(t => t.trim()),
-        song: document.getElementById('song-link').value,
-      };
-      if (postId) {
-        await api.updatePost(postId, data);
-      } else {
-        await api.createPost(data);
-      }
-      window.location.href = 'dashboard.html';
     });
   }
 
@@ -473,18 +475,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     initializeTopicFilters();
   } else if (currentPage === 'post.html' && blogPost) {
     await loadSinglePost();
-  } 
+  } else if (currentPage === 'dashboard.html' && postList) {
+    await loadDashboardPosts();
+  }
 
   // Load more posts
   let currentPageNum = 1;
-  const POSTS_PER_PAGE = 5;
   if (loadMoreBtn) {
     loadMoreBtn.addEventListener('click', async () => {
       try {
         const data = await api.getPosts(currentPageNum + 1, currentTag);
         if (data.posts && data.posts.length > 0) {
-          data.posts.forEach(post => addNewPostToDOM(post));
-        } 
+          data.posts.forEach(post => addNewPostToDOM(post, blogCardGroup));
+        }
         currentPageNum++;
         if (!data.hasMore) {
           loadMoreBtn.disabled = true;
@@ -499,6 +502,6 @@ document.addEventListener('DOMContentLoaded', async () => {
           loadMoreBtn.textContent = `Error: ${error.message}`;
         }
       }
-    })
+    });
   }
 });

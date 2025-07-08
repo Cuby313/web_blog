@@ -12,15 +12,15 @@
   async function login({ username, password }) {
     try {
       const res = await fetch(`${API_BASE}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password })
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
       });
       if (res.ok) {
         const { token } = await res.json();
         return { success: true, token };
       } else if (res.status === 401) {
-        return { success: false, messag: 'Invalid credentials' };
+        return { success: false, message: 'Invalid credentials' };
       } else {
         const error = await res.json();
         throw new Error(error.message || 'Login failed');
@@ -47,7 +47,7 @@
     }
   }
 
-  // Create Post: Submit a new post with optional image and song
+  // Create Post: Submit a new post with optional images and song
   async function createPost(formData) {
     try {
       const token = localStorage.getItem('token');
@@ -82,17 +82,28 @@
 
   // Delete a post by ID
   async function deletePost(id) {
-    const res = await fetch(`${API_BASE}/posts/${id}`, { method: 'DELETE' });
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+    const res = await fetch(`${API_BASE}/posts/${id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` }
+    });
     if (!res.ok) throw new Error('Deleting post failed');
     return res.json();  
   }
 
   // Update a post by ID
-  async function updatePost(id, data) {
+  async function updatePost(id, formData) {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
     const res = await fetch(`${API_BASE}/posts/${id}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData
     });
     if (!res.ok) throw new Error('Updating post failed');
     return res.json();

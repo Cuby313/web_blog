@@ -662,7 +662,7 @@ footer .footer-text {grid-column: 3;}
   margin: 60px;
 }
 
-/*-----------------------------------*\ 
+/*-----------------------------------*\
   #DASHBOARD PAGE
 \*-----------------------------------*/
 
@@ -720,16 +720,32 @@ footer .footer-text {grid-column: 3;}
   margin-top: 1rem;
 }
 
+.preview-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
 .image-preview {
   max-width: 150px;
   max-height: 100px;
   object-fit: cover;
   border-radius: 5px;
-  display: none;
 }
 
-.image-preview-container .image-preview {
-  display: block;
+.delete-preview {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background: red;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 20px;
+  text-align: center;
 }
 
 .song-preview-container {
@@ -776,7 +792,36 @@ footer .footer-text {grid-column: 3;}
   justify-content: flex-end;
 }
 
-/*-----------------------------------*\ 
+/* Ensure blog-card styling applies to dashboard */
+#post-list .blog-card {
+  display: grid;
+  grid-template-columns: 3fr 4fr;
+  gap: 20px;
+  align-items: center;
+  background: var(--background-primary);
+  padding: 10px;
+  margin-bottom: 1rem;
+  border-radius: 10px;
+  box-shadow: 0 10px 10px hsla(0, 0%, 0%, 0.05);
+}
+
+#post-list .blog-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 10px hsla(0, 0%, 0%, 0.1);
+}
+
+#post-list .blog-banner-img {
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+  border-radius: 5px;
+}
+
+#post-list .blog-content-wrapper {
+  padding: 10px 5px;
+}
+
+/*-----------------------------------*\
   #DASHBOARD HEADER
 \*-----------------------------------*/
 
@@ -814,6 +859,7 @@ footer .footer-text {grid-column: 3;}
 .search-bar input::placeholder {
   color: var(--foreground-tertiary);
 }
+
 
 /*-----------------------------------*\ 
   #MEDIA QUERIES
