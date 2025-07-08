@@ -34,7 +34,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   const params = new URLSearchParams(location.search);
   const id = params.get('id');
 
-  if (id) {
+  // Fetch and populate the create new post form
+  if (id && blogEditorForm) {
     const post = await api.getPost(id);
     document.getElementById('post-title').value = post.title;
     document.getElementById('post-content').value = post.content;
@@ -58,6 +59,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
   }
 
+  // Delete and update uploaded images in new post creation form
  function updatePreviews() {
   const ctr = document.getElementById('image-preview-container');
   ctr.innerHTML = '';
