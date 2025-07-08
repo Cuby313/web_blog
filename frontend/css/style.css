@@ -213,6 +213,7 @@ header {
 }
 
 .mobile-nav.active {
+  display: block;
   transform: translateX(0);
   visibility: visible;
 }

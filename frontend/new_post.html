@@ -42,14 +42,15 @@
           </div>
 
           <div class="form-group">
-            <label for="post-image">Featured Image</label>
+            <label for="post-image">Featured Images</label>
             <input 
               type="file" 
               id="post-image" 
-              name="image" 
+              name="images" 
               accept="image/*"
+              multiple
             >
-            <img id="image-preview" class="image-preview" alt="Image preview">
+            <div id="image-preview-container" class="image-preview-container"></div>
           </div>
 
           <div class="form-group">
@@ -92,7 +93,7 @@
           </div>
 
           <div class="form-actions">
-            <button type="button" class="btn btn-secondary" onclick="window.location.href='index.html'">Cancel</button>
+            <button type="button" class="btn btn-secondary" onclick="window.location.href='dashboard.html'">Cancel</button>
             <button type="submit" class="btn btn-primary">Save Post</button>
           </div>
         </form>

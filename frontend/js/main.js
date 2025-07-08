@@ -6,7 +6,9 @@
  * pagination, YouTube song previews and multiple image uploads.
  */
 
-document.addEventListener('DOMContentLoaded', () => {
+const selectedFiles = [];
+
+document.addEventListener('DOMContentLoaded', async () => {
   // DOM elements
   const loginForm = document.getElementById('loginForm');
   const blogCardGroup = document.querySelector('.blog-card-group');
@@ -26,6 +28,55 @@ document.addEventListener('DOMContentLoaded', () => {
   const blogEditorForm = document.getElementById('blog-editor-form');
   const blogPost = document.querySelector('.blog-post');
   const loadMoreBtn = document.querySelector('.load-more');
+  const postList = document.getElementById('post-list');
+  const searchInput = document.getElementById('post-search');
+  const params = new URLSearchParams(location.search);
+  const id = params.get('id');
+
+  if (id) {
+    const post = await api.getPost(id);
+    document.getElementById('post-title').value = post.title;
+    document.getElementById('post-content').value = post.content;
+    document.getElementById('post-tags').value = post.tags.join(',');
+    document.getElementById('song-link').value = post.songUrl;
+
+    const ctr = document.getElementById('image-preview-container');
+    post.images.forEach(url => {
+      const img = document.createElement('img');
+      img.src = url;
+      img.className = 'image-preview';
+      ctr.appendChild(img);
+    });
+
+    document.getElementById('blog-editor-form').onsubmit = async e => {
+      e.preventDefault();
+      const data = new FormData(e.target);
+      selectedFiles.forEach(f => data.append('images', f));
+      await api.updatePost(id, data);
+      location.href = 'dashboard.html';
+    };
+  }
+
+ function updatePreviews() {
+  const ctr = document.getElementById('image-preview-container');
+  ctr.innerHTML = '';
+  selectedFiles.forEach((file, idx) => {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'preview-wrapper';
+    const img = document.createElement('img');
+    img.src = URL.createObjectURL(file);
+    img.className = 'image-preview';
+    wrapper.appendChild(img);
+    const del = document.createElement('button');
+    del.textContent = '×';
+    del.addEventListener('click', () => {
+      selectedFiles.splice(idx, 1);
+      updatePreviews();
+    });
+    wrapper.appendChild(del);
+    ctr.appendChild(wrapper);
+   });
+  }
 
   // Mobile navigation toggle
   if (navMenuBtn && navCloseBtn && nav) {
@@ -98,7 +149,7 @@ document.addEventListener('DOMContentLoaded', () => {
       preview = preview.slice(0, maxLength).trimEnd().concat('…');
     }
     const fallbackImage = 'https://res.cloudinary.com/didhwj8j3/image/upload/v1750941449/front_logo_machu_k8wanc.png';
-    const imageSrc = (post.images && post.images.length > 0) ? post.images[0] : fallbackImage;
+    const imageSrc = (post.image && Array.isArray(post.image) && post.image.length > 0) ? post.image[0] : (post.image || fallbackImage);
 
     const blogCard = document.createElement('div');
     blogCard.className = 'blog-card';
@@ -142,9 +193,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const post = await response.json();
       
       blogPost.innerHTML = `
-        ${post.images && post.images.length > 0 ? `
+        ${post.image && post.image.length > 0 ? `
           <div class="post-carousel">
-            ${post.images.map((img, index) => `
+            ${post.image.map((img, index) => `
               <figure class="post-thumbnail">
                 <img src="${img}" alt="${post.title} image ${index + 1}" class="entry-image">
               </figure>
@@ -180,25 +231,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Dashboard: Multiple image preview
   if (imageInput && imagePreviewContainer) {
-    imageInput.addEventListener('change', function() {
+    imageInput.addEventListener('change', () => {
+      Array.from(imageInput.files).forEach(f => {
+        if (!selectedFiles.includes(f)) selectedFiles.push(f);
+      });
+      updatePreviews();
+      imageInput.value = '';
       imagePreviewContainer.innerHTML = '';
-      const files = this.files;
-      if (files && files.length > 0) {
-        Array.from(files).forEach((file, index) => {
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            const img = document.createElement('img');
-            img.src = e.target.result;
-            img.className = 'image-preview';
-            img.alt = `Preview ${index + 1}`;
-            imagePreviewContainer.appendChild(img);
-          };
-          reader.readAsDataURL(file);
-        });
-        imagePreviewContainer.style.display = 'block';
-      } else {
-        imagePreviewContainer.style.display = 'none';
-      }
     });
   }
 
@@ -208,7 +247,7 @@ document.addEventListener('DOMContentLoaded', () => {
       e.preventDefault();
       const title = document.getElementById('post-title')?.value;
       const content = document.getElementById('post-content')?.value;
-      const images = document.getElementById('post-image')?.files[0];
+      const files = Array.from(document.getElementById('post-image')?.files ||  []);
       const song = document.getElementById('song-link')?.value;
       const tags = document.getElementById('post-tags')?.value;
 
@@ -220,10 +259,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const formData = new FormData();
       formData.append('title', title);
       formData.append('content', content);
-      if (tags) formData.append('tags', tags);
-      if (images) {
-        Array.from(images).forEach(image => formData.append('images', image));
+      if (files.length) {
+        files.forEach(file => formData.append('images', file));
       }
+      if (tags) formData.append('tags', tags);
       if (song) formData.append('song', song);
 
       try {
@@ -250,6 +289,43 @@ document.addEventListener('DOMContentLoaded', () => {
         songPreview.style.display = 'block';
       } else {
         songPreview.style.display = 'none';
+      }
+    });
+  }
+
+  // Dashboard: Post view and search function
+  if (postList && searchInput) {
+    async function loadDashboardPosts(query = '') {
+      const { posts } = await api.getPosts();
+      const filtered = query ? posts.filter(p => 
+        p.title.includes(query) || p.content.includes(query)) : posts;
+      postList.innerHTML = '';
+      filtered.forEach(post => {
+        const card = document.createElement('div');
+        card.className = 'blog-card';
+        card.innerHTML = `
+          <img src="${post.imageUrl}" alt="${post.title}">
+          <h3>${post.title}</h3>
+          <p>${post.content.substring(0, 100)}...</p>
+          <p>Created: ${new Date(post.createdAt).toLocaleDateString()}</p>
+          ${post.updatedAt ? `<p>Updated: ${new Date(post.updatedAt).toLocaleDateString()}</p>` : ''}
+          <button class="btn edit-post" data-id="${post._id}">Edit</button>
+          <button class="btn delete-post" data-id="${post._id}">Delete</button>
+        `;
+        postList.appendChild(card);
+      });
+    }
+
+    searchInput.addEventListener('input', e => loadDashboardPosts(e.target.value));
+    postList.addEventListener('click', async e => {
+      const id = e.target.dataset.id;
+      if (e.target.classList.contains('edit-post')) {
+        window.location.href = `new_post.html?id=${id}`;
+      } else if (e.target.classList.contains('delete-post')) {
+        if (confirm('Are you sure you want to delete this post?')) {
+          await api.deletePost(id);
+          await loadDashboardPosts(searchInput.value);
+        }
       }
     });
   }
@@ -355,16 +431,44 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // New post / edit functionality
+  if (blogEditorForm) {
+    const params = new URLSearchParams(window.location.search);
+    const postId = params.get('id');
+    if (postId) {
+      api.getPost(postId).then(post => {
+        document.getElementById('post-title').value = post.title;
+        document.getElementById('post-content').value = post.content;
+        document.getElementById('post-tags').value = post.tags.join(',');
+      });
+    }
+
+    blogEditorForm.addEventListener('submit', async e => {
+      e.preventDefault();
+      const data = {
+        title: document.getElementById('post-title').value,
+        content: document.getElementById('post-content').value,
+        tags: document.getElementById('post-tags').value.split(',').map(t => t.trim()),
+        song: document.getElementById('song-link').value,
+      };
+      if (postId) {
+        await api.updatePost(postId, data);
+      } else {
+        await api.createPost(data);
+      }
+      window.location.href = 'dashboard.html';
+    });
+  }
+
   // Load posts or single post based on page
   const currentPage = window.location.pathname.split('/').pop() || 'index.html';
   if (currentPage === 'index.html' && blogCardGroup) {
-    loadInitialPosts().then(() => {
-      initializeTopicFilters();
-    });
+    await loadInitialPosts();
+    initializeTopicFilters();
   } else if (currentPage === 'post.html' && blogPost) {
     loadSinglePost();
-  } else if (currentPage === 'dashboard.html') {
-    console.log('Dashboard page loaded');
+  } else if (currentPage === 'dashboard.html' && postList) {
+    loadDashboardPosts();
   }
 
   // Load more posts

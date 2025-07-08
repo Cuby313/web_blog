@@ -73,5 +73,31 @@
     }
   }
 
-  window.api = { login, getPosts, createPost };
+  // Fetch a single post by ID  
+  async function getPost(id) {
+    const res = await fetch(`${API_BASE}/posts/${id}`);
+    if (!res.ok) throw new Error('Fetching post failed');
+    return res.json();
+  }
+
+  // Delete a post by ID
+  async function deletePost(id) {
+    const res = await fetch(`${API_BASE}/posts/${id}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error('Deleting post failed');
+    return res.json();  
+  }
+
+  // Update a post by ID
+  async function updatePost(id, data) {
+    const res = await fetch(`${API_BASE}/posts/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error('Updating post failed');
+    return res.json();
+  }
+
+  // Export
+  window.api = { login, getPosts, getPost, createPost, updatePost, deletePost };
 })();
