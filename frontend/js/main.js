@@ -9,6 +9,7 @@
 const selectedFiles = [];
 
 document.addEventListener('DOMContentLoaded', async () => {
+  console.log('DOMContentLoaded fired, pathname:', window.location.pathname);
   // DOM elements
   const loginForm = document.getElementById('loginForm');
   const blogCardGroup = document.querySelector('.blog-card-group');
@@ -28,7 +29,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const blogEditorForm = document.getElementById('blog-editor-form');
   const blogPost = document.querySelector('.blog-post');
   const loadMoreBtn = document.querySelector('.load-more');
-  const postList = document.getElementById('post-list');
+  const postList = document.getElementById('post-list') || blogCardGroup;
   const searchInput = document.getElementById('post-search');
   const params = new URLSearchParams(location.search);
   const id = params.get('id');
@@ -237,7 +238,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
       updatePreviews();
       imageInput.value = '';
-      imagePreviewContainer.innerHTML = '';
     });
   }
 
@@ -293,30 +293,34 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // Dashboard: Post view and search function
-  if (postList && searchInput) {
-    async function loadDashboardPosts(query = '') {
-      const { posts } = await api.getPosts();
-      const filtered = query ? posts.filter(p => 
-        p.title.includes(query) || p.content.includes(query)) : posts;
-      postList.innerHTML = '';
-      filtered.forEach(post => {
-        const card = document.createElement('div');
-        card.className = 'blog-card';
-        card.innerHTML = `
-          <img src="${post.imageUrl}" alt="${post.title}">
-          <h3>${post.title}</h3>
-          <p>${post.content.substring(0, 100)}...</p>
-          <p>Created: ${new Date(post.createdAt).toLocaleDateString()}</p>
-          ${post.updatedAt ? `<p>Updated: ${new Date(post.updatedAt).toLocaleDateString()}</p>` : ''}
-          <button class="btn edit-post" data-id="${post._id}">Edit</button>
-          <button class="btn delete-post" data-id="${post._id}">Delete</button>
-        `;
-        postList.appendChild(card);
-      });
-    }
+  // Dashboard: Post listing, search- and delete/edit-functions
+  async function loadDashboardPosts(query = '') {
+    if (!postList) return;
+    const { posts } = await api.getPosts();
+    const filtered = query 
+      ? posts.filter(p => p.title.includes(query) || p.content.includes(query))
+      : posts;
+    postList.innerHTML = '';
+    filtered.forEach(post => {
+      const card = document.createElement('div');
+      card.className = 'blog-card';
+      card.innerHTML = `
+        <img src="${post.imageUrl}" alt="${post.title}">
+        <h3>${post.title}</h3>
+        <p>${post.content.substring(0, 100)}...</p>
+        <p>Created: ${new Date(post.createdAt).toLocaleDateString()}</p>
+        ${post.updatedAt ? `<p>Updated: ${new Date(post.updatedAt).toLocaleDateString()}</p>` : ''}
+        <button class="btn edit-post" data-id="${post._id}">Edit</button>
+        <button class="btn delete-post" data-id="${post._id}">Delete</button>
+      `;
+      postList.appendChild(card);
+    });
+  }
 
+  if (postList && searchInput) { 
+    await loadDashboardPosts();
     searchInput.addEventListener('input', e => loadDashboardPosts(e.target.value));
+
     postList.addEventListener('click', async e => {
       const id = e.target.dataset.id;
       if (e.target.classList.contains('edit-post')) {
@@ -466,10 +470,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadInitialPosts();
     initializeTopicFilters();
   } else if (currentPage === 'post.html' && blogPost) {
-    loadSinglePost();
-  } else if (currentPage === 'dashboard.html' && postList) {
-    loadDashboardPosts();
-  }
+    await loadSinglePost();
+  } 
 
   // Load more posts
   let currentPageNum = 1;
