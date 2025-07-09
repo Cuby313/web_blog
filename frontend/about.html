@@ -1,11 +1,11 @@
-<!-- Admin dashboard-->
+<!-- Public homepage, displays blog posts-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mike Tyson | Dashboard</title> 
+  <title>Mike Tyson | About</title> 
   <link rel="stylesheet" href="css/style.css">
   <script type="module" src="js/api.js"></script>
   <script type="module" src="js/main.js"></script>
@@ -20,7 +20,7 @@
         <a href="index.html">
           <img src="https://res.cloudinary.com/didhwj8j3/image/upload/v1750941449/front_logo_machu_k8wanc.png" alt="Blog Logo" width="150" class="logo">
         </a>
-
+        
         <div class="btn-group">
           <button class="nav-menu-btn">
             <ion-icon name="menu-outline"></ion-icon>
@@ -32,7 +32,7 @@
             <li><a href="index.html" class="nav-link">Home</a></li>
             <li><a href="about.html" class="nav-link">About Me</a></li>
             <li><a href="contact.html" class="nav-link">Contact</a></li>
-            <li><a href="#" class="nav-link logout-btn">Logout</a></li>
+            <li><a href="#" class="nav-link login-btn" id="loginBtn">Login</a></li>
           </ul>
         </div>
 
@@ -47,7 +47,7 @@
               <li class="nav-item"><a href="index.html" class="nav-link">Home</a></li>
               <li class="nav-item"><a href="about.html" class="nav-link">About Me</a></li>
               <li class="nav-item"><a href="contact.html" class="nav-link">Contact</a></li>
-              <li class="nav-item"><a href="#" class="nav-link" id="mobileLogoutBtn">Logout</a></li>
+              <li class="nav-item"><a href="#" class="nav-link login-btn" id="mobileLoginBtn">Login</a></li>
             </ul>
           </div>
         </div>
@@ -56,19 +56,7 @@
   </header>
 
   <main>
-    <div class="container dashboard-container">
-      <div class="blog">
-        <h2 class="h2 dashboard-title">Admin Dashboard</h2>
-        <div class="dashboard-header">
-          <div class="search-bar">
-            <input type="text" id="post-search" placeholder="Search posts...">
-          </div>
-          <a href="new_post.html" class="btn btn-primary" id="create-new-post">Create New Post</a>
-        </div>
-        <div class="blog-card-group" id="post-list"></div>
-        <button class="btn btn-secondary load-more">Load More</button>
-      </div>
-    </div>
+   
   </main>
 
   <!-- Footer -->
@@ -90,5 +78,28 @@
       &copy; Copyright 2025 <a href="https://github.com/Cuby313">Cuby313</a>
     </p>
   </footer>
+
+  <!-- Like button -->
+  <div class="like-wrapper">
+    <button class="like-button">
+      <img src="https://res.cloudinary.com/didhwj8j3/image/upload/v1750941460/heart_vh3aa3.svg" alt="Like buttom" width="30">
+    </button>
+    <div class="like-count"><p id="likeCount"></p></div>
+  </div>
+
+  <!-- Login popup -->
+  <div class="login-popup" id="loginPopup">
+    <div class="login-container">
+      <h2>Login</h2>
+      <form id="loginForm">
+        <label for="username">Username:</label>
+        <input type="text" id="username" name="username" required>
+        <label for="password">Password:</label>
+        <input type="text" id="password" name="password" required>
+        <button type="submit" class="btn btn-primary">Login</button>
+        <button type="submit" class="btn btn-secondary" id="closeLogin">Close</button>
+      </form>
+    </div>
+  </div>
 </body>
 </html>

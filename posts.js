@@ -1,18 +1,17 @@
 /**
- * Manages blog posts: Handles CRUD operations for posts with image uploads
- * to Cloudinary and MongoDB storage.
+ * Manages blog posts: Handles CRUD operations for posts with multiple 
+ * image uploads to Cloudinary and MongoDB storage.
  *
  * Features: Pagination, tag filtering, JWT-protected post creation, and
  * robust error handling for production.
  */
 
 import { Router } from 'express';
-import { MongoClient } from 'mongodb';
+import { MongoClient, ObjectId } from 'mongodb';
 import { v2 as cloudinary } from 'cloudinary';
 import multer from 'multer';
 import jwt from 'jsonwebtoken';
 import fs from 'fs/promises';
-import path from 'path';
 
 const router = Router();
 const upload = multer({ dest: 'uploads/' });
@@ -47,14 +46,14 @@ connectDB().catch(error => {
 function authorize(req, res, next) {
   const auth = req.headers.authorization;
   if (!auth?.startsWith('Bearer ')) {
-    return res.sendStatus(401).json({ message: 'No token provided' });
+    return res.status(401).json({ message: 'No token provided' });
   }
   const token = auth.split(' ')[1];
   try {
     jwt.verify(token, process.env.JWT_SECRET);
     next();
   } catch (error) {
-    res.sendStatus(401).json({ message: 'Invalid token', error: error.message });
+    res.status(401).json({ message: 'Invalid token', error: error.message });
   }
 }
 
@@ -70,13 +69,18 @@ router.get('/', async (req, res) => {
     }
     const posts = await postsCollection
       .find(query)
-      .sort({ createdAt: 1 })
+      .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(limit)
       .toArray();
+    const normalizedPosts = posts.map(post => ({
+      ...post,
+      images: post.images || (post.image ? [post.image] : []),
+      image: undefined 
+    }));
     const total = await postsCollection.countDocuments(query);
     res.json({
-      posts,
+      posts: normalizedPosts,
       total,
       hasMore: (page * limit) < total
     });
@@ -86,45 +90,52 @@ router.get('/', async (req, res) => {
   }
 });
 
-
 // GET /api/posts/:id - Fetch a single post by ID
 router.get('/:id', async (req, res) => {
   try {
-    const post = await postsCollection.findOne({ id: req.params.id });
+    const post = await postsCollection.findOne({ _id: new ObjectId(req.params.id) });
     if (!post) {
       return res.status(404).json({ message: 'Post not found' });
     }
-    res.json(post);
+    res.json({
+      ...post,
+      images: post.images || (post.image ? [post.image] : []),
+      image: undefined
+    });
   } catch (error) {
     console.error('Error fetching post:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 
-// POST /api/posts - Create a new post with optional image upload (protected)
-router.post('/', authorize, upload.single('image'), async (req, res) => {
+// POST /api/posts - Create a new post with optional multiple image uploads
+router.post('/', authorize, upload.array('images', 10), async (req, res) => {
   try {
     const { title, content, song, tags } = req.body;
     if (!title || !content) {
       return res.status(400).json({ message: 'Title and content are required' });
     }
     const parsedTags = tags ? tags.split(',').map(t => t.trim()).filter(t => t) : [];
-    let imageUrl = null;
+    let imageUrls = [];
 
-    if (req.file) {
+    if (req.files && req.files.length > 0) {
       try {
-        const result = await cloudinary.uploader.upload(req.file.path, {
-          folder: 'blog_images',
-          resource_type: 'image'
-        });
-        imageUrl = result.secure_url;
+        for (const file of req.files) {
+          const result = await cloudinary.uploader.upload(file.path, {
+            folder: 'blog_images',
+            resource_type: 'image'
+          });
+          imageUrls.push(result.secure_url);
+        }
       } catch (uploadError) {
         console.error('Cloudinary upload failed:', uploadError);
         return res.status(500).json({ message: 'Image upload failed', error: uploadError.message });
       } finally {
         try {
-          if (await fs.access(req.file.path).then(() => true).catch(() => false)) {
-            await fs.unlink(req.file.path);
+          for (const file of req.files) {
+            if (await fs.access(file.path).then(() => true).catch(() => false)) {
+              await fs.unlink(file.path);
+            }
           }
         } catch (fsError) {
           console.error('Failed to delete temporary file:', fsError);
@@ -133,20 +144,95 @@ router.post('/', authorize, upload.single('image'), async (req, res) => {
     }
 
     const newPost = {
-      id: Date.now().toString(),
       title,
       content,
-      song: song || null,
-      image: imageUrl,
+      songUrl: song || null,
+      images: imageUrls,
       tags: parsedTags,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
     };
   
-    await postsCollection.insertOne(newPost);
+    const result = await postsCollection.insertOne(newPost);
+    newPost._id = result.insertedId;
     res.status(201).json(newPost);
   } catch (error) {
     console.error('Error creating post:', error);
     res.status(500).json({ message: 'Failed to create post', error: error.message });
+  }
+});
+
+// PUT /api/posts/:id - Update a post with optional image uploads
+router.put('/:id', authorize, upload.array('images', 10), async (req, res) => {
+  try {
+    const { title, content, song, tags, existingImages } = req.body;
+    if (!title || !content) {
+      return res.status(400).json({ message: 'Title and content are required' });
+    }
+    const parsedTags = tags ? tags.split(',').map(t => t.trim()).filter(t => t) : [];
+    let imageUrls = existingImages ? (Array.isArray(existingImages) ? existingImages : [existingImages]) : [];
+
+    if (req.files && req.files.length > 0) {
+      try {
+        for (const file of req.files) {
+          const result = await cloudinary.uploader.upload(file.path, {
+            folder: 'blog_images',
+            resource_type: 'image'
+          });
+          imageUrls.push(result.secure_url);
+        }
+      } catch (uploadError) {
+        console.error('Cloudinary upload failed:', uploadError);
+        return res.status(500).json({ message: 'Image upload failed', error: uploadError.message });
+      } finally {
+        try {
+          for (const file of req.files) {
+            if (await fs.access(file.path).then(() => true).catch(() => false)) {
+              await fs.unlink(file.path);
+            }
+          }
+        } catch (fsError) {
+          console.error('Failed to delete temporary file:', fsError);
+        }
+      }
+    }
+
+    const updatedPost = {
+      title,
+      content,
+      songUrl: song || null,
+      images: imageUrls,
+      tags: parsedTags,
+      updatedAt: new Date().toISOString()
+    };
+
+    const result = await postsCollection.updateOne(
+      { _id: new ObjectId(req.params.id) },
+      { $set: updatedPost }
+    );
+
+    if (result.matchedCount === 0) {
+      return res.status(404).json({ message: 'Post not found' });
+    }
+
+    res.json({ ...updatedPost, _id: req.params.id });
+  } catch (error) {
+    console.error('Error updating post:', error);
+    res.status(500).json({ message: 'Failed to update post', error: error.message });
+  }
+});
+
+// DELETE /api/posts/:id - Delete a post
+router.delete('/:id', authorize, async (req, res) => {
+  try {
+    const result = await postsCollection.deleteOne({ _id: new ObjectId(req.params.id) });
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ message: 'Post not found' });
+    }
+    res.json({ message: 'Post deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting post:', error);
+    res.status(500).json({ message: 'Failed to delete post', error: error.message });
   }
 });
 
