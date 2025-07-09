@@ -73,9 +73,14 @@ router.get('/', async (req, res) => {
       .skip((page - 1) * limit)
       .limit(limit)
       .toArray();
+    const normalizedPosts = posts.map(post => ({
+      ...post,
+      images: post.images || (post.image ? [post.image] : []),
+      image: undefined 
+    }));
     const total = await postsCollection.countDocuments(query);
     res.json({
-      posts,
+      posts: normalizedPosts,
       total,
       hasMore: (page * limit) < total
     });
@@ -92,7 +97,11 @@ router.get('/:id', async (req, res) => {
     if (!post) {
       return res.status(404).json({ message: 'Post not found' });
     }
-    res.json(post);
+    res.json({
+      ...post,
+      images: post.images || (post.image ? [post.image] : []),
+      image: undefined
+    });
   } catch (error) {
     console.error('Error fetching post:', error);
     res.status(500).json({ message: 'Server error', error: error.message });

@@ -3,7 +3,7 @@
  * interactions for login, post display and post creation.
  *
  * Features: Responsive navigation, post rendering with Cloudinary images,
- * pagination, YouTube song previews and multiple image uploads.
+ * pagination, YouTube song previews, multiple image uploads, and image carousel.
  */
 
 const selectedFiles = [];
@@ -171,7 +171,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       preview = preview.slice(0, maxLength).trimEnd().concat('…');
     }
     const fallbackImage = 'https://res.cloudinary.com/didhwj8j3/image/upload/v1750941449/front_logo_machu_k8wanc.png';
-    const imageSrc = (post.images && Array.isArray(post.images) && post.images.length > 0) ? post.images[0] : fallbackImage;
+    const imageSrc = (post.images && Array.isArray(post.images) && post.images.length > 0) ? post.images[0] : (post.image || fallbackImage);
 
     const blogCard = document.createElement('div');
     blogCard.className = 'blog-card';
@@ -201,7 +201,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     targetContainer.insertBefore(blogCard, targetContainer.firstChild);
   }
 
-  // Load single post for post.html
+  // Load single post for post.html with carousel
   async function loadSinglePost() {
     if (!blogPost) return;
     const urlParams = new URLSearchParams(window.location.search);
@@ -212,14 +212,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     try {
       const post = await api.getPost(postId);
+      const images = post.images && Array.isArray(post.images) ? post.images : (post.image ? [post.image] : []);
       blogPost.innerHTML = `
-        ${post.images && Array.isArray(post.images) && post.images.length > 0 ? `
+        ${images.length > 0 ? `
           <div class="post-carousel">
-            ${post.images.map((img, index) => `
-              <figure class="post-thumbnail">
-                <img src="${img}" alt="${post.title} image ${index + 1}" class="entry-image">
-              </figure>
-            `).join('')}
+            <div class="carousel-inner">
+              ${images.map((img, index) => `
+                <div class="carousel-item ${index === 0 ? 'active' : ''}">
+                  <figure class="post-thumbnail">
+                    <img src="${img}" alt="${post.title} image ${index + 1}" class="entry-image">
+                  </figure>
+                </div>
+              `).join('')}
+            </div>
+            ${images.length > 1 ? `
+              <button class="carousel-control prev" aria-label="Previous image">&#10094;</button>
+              <button class="carousel-control next" aria-label="Next image">&#10095;</button>
+            ` : ''}
           </div>
         ` : ''}
         <h1 class="entry-title">${post.title}</h1>
@@ -228,7 +237,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         </div>
         ${post.tags && post.tags.length > 0 ? `
           <div class="entry-tags">
-            ${post.tags.map(tag => `<span>#${tag}</span>`).join('')}
+            ${post.tags.map(tag => `<span class="tag">#${tag}</span>`).join('')}
           </div>
         ` : ''}
         ${post.songUrl ? `
@@ -243,6 +252,30 @@ document.addEventListener('DOMContentLoaded', async () => {
           <div class="space-post-footer"></div>
         </div>
       `;
+      
+      if (images.length > 1) {
+        const carousel = blogPost.querySelector('.post-carousel');
+        const items = carousel.querySelectorAll('.carousel-item');
+        const prevBtn = carousel.querySelector('.prev');
+        const nextBtn = carousel.querySelector('.next');
+        let currentIndex = 0;
+
+        function showSlide(index) {
+          items.forEach((item, i) => {
+            item.classList.toggle('active', i === index);
+          });
+        }
+
+        prevBtn.addEventListener('click', () => {
+          currentIndex = (currentIndex - 1 + items.length) % items.length;
+          showSlide(currentIndex);
+        });
+
+        nextBtn.addEventListener('click', () => {
+          currentIndex = (currentIndex + 1) % items.length;
+          showSlide(currentIndex);
+        });
+      }
     } catch (error) {
       console.error('Error loading single post:', error);
       blogPost.innerHTML = `<p class="entry-content">Failed to load post: ${error.message}</p>`;
@@ -332,7 +365,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         card.className = 'blog-card';
         const imageSrc = (post.images && Array.isArray(post.images) && post.images.length > 0) 
           ? post.images[0] 
-          : 'https://res.cloudinary.com/didhwj8j3/image/upload/v1750941449/front_logo_machu_k8wanc.png';
+          : (post.image || 'https://res.cloudinary.com/didhwj8j3/image/upload/v1750941449/front_logo_machu_k8wanc.png');
         card.innerHTML = `
           <div class="blog-card-banner">
             <img src="${imageSrc}" alt="${post.title}" class="blog-banner-img">
