@@ -1,6 +1,6 @@
 {
   "name": "web_blog",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "type": "module",
   "scripts": {
     "start": "node -r dotenv/config server.js"
