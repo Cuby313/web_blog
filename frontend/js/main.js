@@ -198,7 +198,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         ` : ''}
       </div>
     `;
-    targetContainer.insertBefore(blogCard, targetContainer.firstChild);
+    targetContainer.appendChild(blogCard);
   }
 
   // Load single post for post.html with carousel
@@ -226,8 +226,8 @@ document.addEventListener('DOMContentLoaded', async () => {
               `).join('')}
             </div>
             ${images.length > 1 ? `
-              <button class="carousel-control prev" aria-label="Previous image">&#10094;</button>
-              <button class="carousel-control next" aria-label="Next image">&#10095;</button>
+              <button class="carousel-control prev" aria-label="Previous image">❮</button>
+              <button class="carousel-control next" aria-label="Next image">❯</button>
             ` : ''}
           </div>
         ` : ''}
@@ -344,12 +344,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // Dashboard: Post listing, search, and delete/edit
-  async function loadDashboardPosts(query = '') {
+  // Dashboard: Post listing, search, and delete/edit with pagination
+  let dashboardPageNum = 1;
+  async function loadDashboardPosts(query = '', page = 1) {
     if (!postList) return;
     try {
-      const { posts } = await api.getPosts();
-      postList.innerHTML = '';
+      const { posts, hasMore } = await api.getPosts(page);
+      if (page === 1) {
+        postList.innerHTML = '';
+      }
       const filtered = query 
         ? posts.filter(p => 
             p.title.toLowerCase().includes(query.toLowerCase()) || 
@@ -360,27 +363,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         postList.innerHTML = '<p>No posts found.</p>';
         return;
       }
-      filtered.forEach(post => {
-        const card = document.createElement('div');
-        card.className = 'blog-card';
-        const imageSrc = (post.images && Array.isArray(post.images) && post.images.length > 0) 
-          ? post.images[0] 
-          : (post.image || 'https://res.cloudinary.com/didhwj8j3/image/upload/v1750941449/front_logo_machu_k8wanc.png');
-        card.innerHTML = `
-          <div class="blog-card-banner">
-            <img src="${imageSrc}" alt="${post.title}" class="blog-banner-img">
-          </div>
-          <div class="blog-content-wrapper">
-            <h3 class="h3">${post.title}</h3>
-            <p class="blog-text">${post.content.substring(0, 100)}...</p>
-            <p class="text-sm">Created: ${new Date(post.createdAt).toLocaleDateString()}</p>
-            ${post.updatedAt ? `<p class="text-sm">Updated: ${new Date(post.updatedAt).toLocaleDateString()}</p>` : ''}
-            <button class="btn edit-post" data-id="${post._id}">Edit</button>
-            <button class="btn delete-post" data-id="${post._id}">Delete</button>
-          </div>
-        `;
-        postList.appendChild(card);
-      });
+      filtered.forEach(post => addNewPostToDOM(post, postList));
+      const dashboardLoadMoreBtn = document.querySelector('#post-list ~ .load-more');
+      if (dashboardLoadMoreBtn) {
+        dashboardLoadMoreBtn.disabled = !hasMore;
+        dashboardLoadMoreBtn.textContent = hasMore ? 'Load more' : 'No more posts';
+      }
     } catch (error) {
       console.error('Error loading dashboard posts:', error);
       postList.innerHTML = `<p>Failed to load posts: ${error.message}</p>`;
@@ -389,7 +377,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   if (postList && searchInput) { 
     await loadDashboardPosts();
-    searchInput.addEventListener('input', e => loadDashboardPosts(e.target.value));
+    searchInput.addEventListener('input', e => loadDashboardPosts(e.target.value, 1));
     postList.addEventListener('click', async e => {
       const id = e.target.dataset.id;
       if (e.target.classList.contains('edit-post')) {
@@ -406,6 +394,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       }
     });
+    const dashboardLoadMoreBtn = document.querySelector('#post-list ~ .load-more');
+    if (dashboardLoadMoreBtn) {
+      dashboardLoadMoreBtn.addEventListener('click', async () => {
+        try {
+          await loadDashboardPosts(searchInput?.value || '', dashboardPageNum + 1);
+          dashboardPageNum++;
+        } catch (error) {
+          console.error('Error loading more dashboard posts:', error);
+          dashboardLoadMoreBtn.textContent = `Error: ${error.message}`;
+        }
+      });
+    }
   }
 
   // Extract YouTube video ID from URL
@@ -416,17 +416,19 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // Load initial posts for index.html
-  async function loadInitialPosts() {
+  async function loadInitialPosts(page = 1) {
     if (!blogCardGroup) {
       console.error('blog-card-group element not found');
       return;
     }
     try {
-      const data = await api.getPosts(1, currentTag);
-      blogCardGroup.innerHTML = '';
+      const data = await api.getPosts(page, currentTag);
+      if (page === 1) {
+        blogCardGroup.innerHTML = '';
+      }
       if (data.posts && data.posts.length > 0) {
         data.posts.forEach(post => addNewPostToDOM(post, blogCardGroup));
-      } else {
+      } else if (page === 1) {
         blogCardGroup.innerHTML = '<p>No posts available.</p>';
       }
       if (loadMoreBtn) {
@@ -512,23 +514,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadDashboardPosts();
   }
 
-  // Load more posts
+  // Load more posts for index.html
   let currentPageNum = 1;
   if (loadMoreBtn) {
     loadMoreBtn.addEventListener('click', async () => {
       try {
-        const data = await api.getPosts(currentPageNum + 1, currentTag);
-        if (data.posts && data.posts.length > 0) {
-          data.posts.forEach(post => addNewPostToDOM(post, blogCardGroup));
-        }
+        await loadInitialPosts(currentPageNum + 1);
         currentPageNum++;
-        if (!data.hasMore) {
-          loadMoreBtn.disabled = true;
-          loadMoreBtn.textContent = 'No more posts';
-        } else {
-          loadMoreBtn.disabled = false;
-          loadMoreBtn.textContent = 'Load more';
-        }
       } catch (error) {
         console.error('Error loading more posts:', error);
         if (loadMoreBtn) {

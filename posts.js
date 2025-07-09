@@ -69,7 +69,7 @@ router.get('/', async (req, res) => {
     }
     const posts = await postsCollection
       .find(query)
-      .sort({ createdAt: 1 })
+      .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(limit)
       .toArray();
