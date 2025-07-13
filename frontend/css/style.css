@@ -964,20 +964,34 @@ footer .footer-text {grid-column: 3;}
 
 .about-text .btn,
 .contact-text .btn {
-  display: inline-block;
+  display: inline-flex; /* Ensures centering of text/icon */
+  justify-content: center;
+  align-items: center;
+  gap: 5px; /* Space for potential icon */
   margin-top: 1.5rem;
-  padding: 0.75rem 1.5rem;
-  background-color: var(--primary-color); 
-  color: #fff;
-  border-radius: 5px;
-  text-decoration: none;
+  padding: 0.6875rem 1.1875rem; /* Matches .btn-primary */
+  background: var(--accent); /* Matches .btn-primary */
+  color: var(--white); /* Ensures readable text, matches .btn-primary */
+  border-radius: 100px; /* Pill shape, matches .btn-primary */
+  font-family: 'Inter', sans-serif; /* Matches general typography */
+  font-size: var(--fs-4); /* Matches .btn-primary text size */
   font-weight: 600;
-  transition: background-color 0.3s ease;
+  text-decoration: none;
+  text-align: center;
+  transition: background 0.3s ease, color 0.3s ease, transform 0.3s ease;
 }
 
 .about-text .btn:hover,
 .contact-text .btn:hover {
-  background-color: var(--primary-color-dark); 
+  background: var(--foreground-secondary); /* Matches .btn-primary:hover */
+  color: var(--action-primary); /* Matches .btn-primary:hover */
+  transform: scale(1.05); /* Subtle hover animation */
+}
+
+.about-text .btn ion-icon,
+.contact-text .btn ion-icon {
+  font-size: 20px;
+  vertical-align: middle;
 }
 
 .section-subtitle {
