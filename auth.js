@@ -13,32 +13,44 @@ const router = Router();
 const uri = process.env.MONGO_URI;
 const client = new MongoClient(uri);
 let usersCollection;
+let isConnected = false;
 
 // Connect to MongoDB and initialize admin user
 async function connectDB() {
   try {
-    await client.connect();
-    const db = client.db('blogdb');
-    usersCollection = db.collection('users');
-    const admin = await usersCollection.findOne({ username: process.env.ADMIN_USERNAME });
-    if (!admin) {
-      const passwordHash = await bcrypt.hash(process.env.ADMIN_PASSWORD, 8);
-      await usersCollection.insertOne({
-        id: 1,
-        username: process.env.ADMIN_USERNAME,
-        passwordHash
-      });
-      console.log('Admin user created');
+    if (!isConnected) {
+      await client.connect();
+      const db = client.db('blogdb');
+      usersCollection = db.collection('users');
+      isConnected = true;
+      console.log('MongoDB connected for auth');
+      const admin = await usersCollection.findOne({ username: process.env.ADMIN_USERNAME });
+      if (!admin) {
+        const passwordHash = await bcrypt.hash(process.env.ADMIN_PASSWORD, 8);
+        await usersCollection.insertOne({
+          id: 1,
+          username: process.env.ADMIN_USERNAME,
+          passwordHash
+        });
+        console.log('Admin user created');
+      }
     }
   } catch (error) {
     console.error('Failed to connect to MongoDB or create admin:', error);
     throw error;
   }
 }
-connectDB().catch(error => {
-  console.error('MongoDB connection failed, exiting:', error);
-  process.exit(1);
-});
+
+async function ensureDBConnection(req, res, next) {
+  try {
+    await connectDB();
+    next();
+  } catch (error) {
+    res.status(500).json({ message: 'Database connection failed', error: error.message });
+  }
+}
+  
+router.use(ensureDBConnection)
 
 // POST /api/auth/login - Authenticate user and issue JWT
 router.post('/login', async (req, res) => {

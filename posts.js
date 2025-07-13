@@ -18,6 +18,7 @@ const upload = multer({ dest: 'uploads/' });
 const uri = process.env.MONGO_URI;
 const client = new MongoClient(uri);
 let postsCollection;
+let isConnected = false;
 
 // Configure Cloudinary
 cloudinary.config({
@@ -29,18 +30,28 @@ cloudinary.config({
 // Connect to MongoDB
 async function connectDB() {
   try {
-    await client.connect();
-    const db = client.db('blogdb');
-    postsCollection = db.collection('posts'); 
+    if (!isConnected) {
+      await client.connect();
+      const db = client.db('blogdb');
+      postsCollection = db.collection('posts'); 
+      isConnected = true;
+      console.log('MongoDB connected for posts');
+    }
   } catch (error) {
     console.error('Failed to connect to MongoDB:', error);
     throw error;
   }
 }
-connectDB().catch(error => {
-  console.error('MongoDB connection failed, exiting:', error);
-  process.exit(1);
-});
+async function ensureDBConnection(req, res, next) {
+  try {
+    await connectDB();
+    next();
+  } catch (error) {
+    res.status(500).json({ message: 'Database connection failed', error: error.message });
+    }
+  }
+
+router.use(ensureDBConnection);
 
 // Middleware to protect routes
 function authorize(req, res, next) {
