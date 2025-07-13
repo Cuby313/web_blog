@@ -964,17 +964,17 @@ footer .footer-text {grid-column: 3;}
 
 .about-text .btn,
 .contact-text .btn {
-  display: inline-flex; /* Ensures centering of text/icon */
+  display: inline-flex;
   justify-content: center;
   align-items: center;
-  gap: 5px; /* Space for potential icon */
+  gap: 5px;
   margin-top: 1.5rem;
-  padding: 0.6875rem 1.1875rem; /* Matches .btn-primary */
-  background: var(--accent); /* Matches .btn-primary */
-  color: var(--white); /* Ensures readable text, matches .btn-primary */
-  border-radius: 100px; /* Pill shape, matches .btn-primary */
-  font-family: 'Inter', sans-serif; /* Matches general typography */
-  font-size: var(--fs-4); /* Matches .btn-primary text size */
+  padding: 0.6875rem 1.1875rem; 
+  background: var(--accent); 
+  color: var(--white); 
+  border-radius: 100px; 
+  font-family: 'Inter', sans-serif; 
+  font-size: var(--fs-4); 
   font-weight: 600;
   text-decoration: none;
   text-align: center;
@@ -983,9 +983,9 @@ footer .footer-text {grid-column: 3;}
 
 .about-text .btn:hover,
 .contact-text .btn:hover {
-  background: var(--foreground-secondary); /* Matches .btn-primary:hover */
-  color: var(--action-primary); /* Matches .btn-primary:hover */
-  transform: scale(1.05); /* Subtle hover animation */
+  background: var(--foreground-secondary); 
+  color: var(--action-primary); 
+  transform: scale(1.05); 
 }
 
 .about-text .btn ion-icon,
