@@ -2,8 +2,8 @@
  * Handles DOM manipulation and event listeners: Connects API calls to user
  * interactions for login, post display and post creation.
  *
- * Features: Responsive navigation, post rendering with Cloudinary images,
- * pagination, YouTube song previews, multiple image uploads, and image carousel.
+ * Features: Responsive navigation, post rendering with Cloudinary images and videos,
+ * pagination, YouTube song previews, multiple image and video uploads and media carousel.
  */
 
 const selectedFiles = [];
@@ -23,8 +23,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   const mobileLoginBtn = document.getElementById('mobileLoginBtn');
   const loginPopup = document.getElementById('loginPopup');
   const closeLogin = document.getElementById('closeLogin');
-  const imageInput = document.getElementById('post-image');
-  const imagePreviewContainer = document.getElementById('image-preview-container');
+  const mediaInput = document.getElementById('post-media');
+  const mediaPreviewContainer = document.getElementById('media-preview-container');
   const songInput = document.getElementById('song-link');
   const songPreview = document.getElementById('song-preview');
   const blogEditorForm = document.getElementById('blog-editor-form');
@@ -59,9 +59,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       document.getElementById('post-content').value = post.content || '';
       document.getElementById('post-tags').value = post.tags?.join(',') || '';
       document.getElementById('song-link').value = post.songUrl || '';
-      if (imagePreviewContainer && post.images) {
+      if (mediaPreviewContainer && (post.images || post.videos)) {
         selectedFiles.length = 0;
-        post.images.forEach(url => selectedFiles.push(url));
+        if (post.images) post.images.forEach(url => selectedFiles.push({ type: 'image', url }));
+        if (post.videos) post.videos.forEach(url => selectedFiles.push({ type: 'video', url }));
         updatePreviews();
       }
     } catch (error) {
@@ -70,17 +71,60 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  // Multiple image preview and deletion
-  function updatePreviews() {
-    if (!imagePreviewContainer) return;
-    imagePreviewContainer.innerHTML = '';
-    selectedFiles.forEach((file, idx) => {
+  // Generate thumbnail for a video file
+  async function generateVideoThumbnail(file) {
+    return new Promise((resolve, reject) => {
+      const video = document.createElement('video');
+      video.src = URL.createObjectURL(file);
+      video.muted = true;
+      video.preload = 'metadata';
+      video.onloadedmetadata = () => {
+        video.currentTime = 1; 
+      };
+      video.onseeked = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const dataUrl = canvas.toDataURL('image/jpeg');
+        URL.revokeObjectURL(video.src);
+        resolve(dataUrl);
+      };
+      video.onerror = () => {
+        URL.revokeObjectURL(video.src);
+        reject(new Error('Failed to generate video thumbnail'));
+      };
+    });
+  }
+
+  // Multiple media preview and deletion
+  async function updatePreviews() {
+    if (!mediaPreviewContainer) return;
+    mediaPreviewContainer.innerHTML = '';
+    for (let idx = 0; idx < selectedFiles.length; idx++) {
+      const file = selectedFiles[idx];
       const wrapper = document.createElement('div');
-      wrapper.className = 'preview-wrapper';
-      const img = document.createElement('img');
-      img.src = typeof file === 'string' ? file : URL.createObjectURL(file);
-      img.className = 'image-preview';
-      wrapper.appendChild(img);
+      wrapper.className = 'preview-wrapper' + ((typeof file === 'string' && file.includes('/video/')) || (file.type === 'video' || (file.url && file.url.includes('/video/'))) ? ' video-preview' : '');
+      const element = document.createElement('img');
+      element.className = 'media-preview';
+      try {
+        if ((typeof file === 'string' && file.includes('/video/')) || (file.type === 'video' || (file.url && file.url.includes('/video/')))) {
+          if (file.url && file.url.includes('/video/')) {
+            element.src = file.url.replace('/upload/', '/upload/e_thumb/').replace(/\.[^/.]+$/, '.jpg');
+          } else if (file.file) {
+            element.src = await generateVideoThumbnail(file.file);
+          } else {
+            element.src = 'https://res.cloudinary.com/didhwj8j3/image/upload/v1750941449/front_logo_machu_k8wanc.png';
+          }
+        } else {
+          element.src = typeof file === 'string' ? file : (file.url || URL.createObjectURL(file.file));
+        }
+      } catch (error) {
+        console.error('Error generating preview:', error);
+        element.src = 'https://res.cloudinary.com/didhwj8j3/image/upload/v1750941449/front_logo_machu_k8wanc.png';
+      }
+      wrapper.appendChild(element);
       const del = document.createElement('button');
       del.textContent = '×';
       del.className = 'delete-preview';
@@ -89,20 +133,25 @@ document.addEventListener('DOMContentLoaded', async () => {
         updatePreviews();
       });
       wrapper.appendChild(del);
-      imagePreviewContainer.appendChild(wrapper);
-    });
-    imagePreviewContainer.style.display = selectedFiles.length ? 'block' : 'none';
+      mediaPreviewContainer.appendChild(wrapper);
+    }
+    mediaPreviewContainer.style.display = selectedFiles.length ? 'block' : 'none';
   }
 
-  if (imageInput && imagePreviewContainer) {
-    imageInput.addEventListener('change', () => {
-      Array.from(imageInput.files).forEach(f => {
-        if (!selectedFiles.some(existing => typeof existing === 'string' ? existing === f.name : existing.name === f.name)) {
-          selectedFiles.push(f);
+  if (mediaInput && mediaPreviewContainer) {
+    mediaInput.addEventListener('change', async () => {
+      Array.from(mediaInput.files).forEach(f => {
+        if (!selectedFiles.some(existing => 
+          (typeof existing === 'string' && existing === f.name) || 
+          (existing.url && existing.url === f.name) || 
+          (existing.name && existing.name === f.name)
+        )) {
+          const isVideo = f.type.startsWith('video/');
+          selectedFiles.push({ type: isVideo ? 'video' : 'image', file: f });
         }
       });
-      updatePreviews();
-      imageInput.value = '';
+      await updatePreviews();
+      mediaInput.value = '';
     });
   }
 
@@ -171,19 +220,22 @@ document.addEventListener('DOMContentLoaded', async () => {
       preview = preview.slice(0, maxLength).trimEnd().concat('…');
     }
     const fallbackImage = 'https://res.cloudinary.com/didhwj8j3/image/upload/v1750941449/front_logo_machu_k8wanc.png';
-    const imageSrc = (post.images && Array.isArray(post.images) && post.images.length > 0) ? post.images[0] : (post.image || fallbackImage);
+    const mediaSrc = (post.images && post.images.length > 0) ? post.images[0] : 
+                     (post.videos && post.videos.length > 0) ? 
+                     post.videos[0].replace('/upload/', '/upload/e_thumb/').replace(/\.[^/.]+$/, '.jpg') : 
+                     fallbackImage;
+    const isVideo = post.videos && post.videos.length > 0 && !mediaSrc.includes('e_thumb');
+    const tagLabel = (post.tags && post.tags.length > 0) ? post.tags[0] : 'BLOG';
 
     const blogCard = document.createElement('div');
     blogCard.className = 'blog-card';
     blogCard.dataset.tags = (post.tags || []).join(',');
-    const tagLabel = (post.tags && post.tags.length > 0) ? post.tags[0] : 'BLOG';
-    
     blogCard.innerHTML = `
       <div class="blog-card-banner">
-        <img src="${imageSrc}" alt="${post.title}" width="250" class="blog-banner-img">
+        <img src="${mediaSrc}" alt="${post.title}" width="250" class="blog-banner-img">
       </div>
       <div class="blog-content-wrapper">
-        <button class="blog-topic text-tiny">${post.songUrl ? 'SONG' : 'BLOG'}</button>
+        <button class="blog-topic text-tiny">${post.songUrl ? 'SONG' : (isVideo ? 'VIDEO' : 'BLOG')}</button>
         <button class="blog-topic text-tiny">${tagLabel}</button>
         <h3 class="h3"><a href="post.html?id=${post._id}">${post.title}</a></h3>
         <p class="blog-text">${preview}</p>
@@ -212,22 +264,33 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     try {
       const post = await api.getPost(postId);
-      const images = post.images && Array.isArray(post.images) ? post.images : (post.image ? [post.image] : []);
+      const media = [
+        ...(post.images && Array.isArray(post.images) ? post.images.map(url => ({ type: 'image', url })) : []),
+        ...(post.videos && Array.isArray(post.videos) ? post.videos.map(url => ({ type: 'video', url })) : [])
+      ];
       blogPost.innerHTML = `
-        ${images.length > 0 ? `
+        ${media.length > 0 ? `
           <div class="post-carousel">
             <div class="carousel-inner">
-              ${images.map((img, index) => `
+              ${media.map((item, index) => `
                 <div class="carousel-item ${index === 0 ? 'active' : ''}">
                   <figure class="post-thumbnail">
-                    <img src="${img}" alt="${post.title} image ${index + 1}" class="entry-image">
+                    ${item.type === 'video' ? `
+                      <video class="entry-media" controls>
+                        <source src="${item.url}" type="video/mp4">
+                      </video>
+                      <button class="play-button" aria-label="Play video">▶</button>
+                    ` : `
+                      <img src="${item.url}" alt="${post.title} media ${index + 1}" class="entry-media">
+                    `}
+                    <button class="fullscreen-button" aria-label="Toggle fullscreen">⤢</button>
                   </figure>
                 </div>
               `).join('')}
             </div>
-            ${images.length > 1 ? `
-              <button class="carousel-control prev" aria-label="Previous image">❮</button>
-              <button class="carousel-control next" aria-label="Next image">❯</button>
+            ${media.length > 1 ? `
+              <button class="carousel-control prev" aria-label="Previous media">❮</button>
+              <button class="carousel-control next" aria-label="Next media">❯</button>
             ` : ''}
           </div>
         ` : ''}
@@ -252,8 +315,8 @@ document.addEventListener('DOMContentLoaded', async () => {
           <div class="space-post-footer"></div>
         </div>
       `;
-      
-      if (images.length > 1) {
+
+      if (media.length > 1) {
         const carousel = blogPost.querySelector('.post-carousel');
         const items = carousel.querySelectorAll('.carousel-item');
         const prevBtn = carousel.querySelector('.prev');
@@ -263,6 +326,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         function showSlide(index) {
           items.forEach((item, i) => {
             item.classList.toggle('active', i === index);
+            const video = item.querySelector('video');
+            if (video) video.pause();
           });
         }
 
@@ -276,6 +341,40 @@ document.addEventListener('DOMContentLoaded', async () => {
           showSlide(currentIndex);
         });
       }
+
+      blogPost.querySelectorAll('.play-button').forEach(button => {
+        button.addEventListener('click', () => {
+          const video = button.previousElementSibling;
+          if (video.tagName === 'VIDEO') {
+            if (video.paused) {
+              video.play();
+              button.style.display = 'none';
+            } else {
+              video.pause();
+              button.style.display = 'block';
+            }
+          }
+        });
+      });
+
+      blogPost.querySelectorAll('.fullscreen-button').forEach(button => {
+        button.addEventListener('click', () => {
+          const media = button.parentElement.querySelector('.entry-media');
+          if (media.requestFullscreen) {
+            media.requestFullscreen();
+          } else if (media.webkitRequestFullscreen) {
+            media.webkitRequestFullscreen();
+          } else if (media.msRequestFullscreen) {
+            media.msRequestFullscreen();
+          }
+        });
+      });
+
+      document.addEventListener('fullscreenchange', () => {
+        if (!document.fullscreenElement) {
+          blogPost.querySelectorAll('video').forEach(video => video.pause());
+        }
+      });
     } catch (error) {
       console.error('Error loading single post:', error);
       blogPost.innerHTML = `<p class="entry-content">Failed to load post: ${error.message}</p>`;
@@ -299,11 +398,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       const formData = new FormData();
       formData.append('title', title);
       formData.append('content', content);
-      selectedFiles.forEach(file => {
-        if (typeof file === 'string') {
-          formData.append('existingImages', file);
+      selectedFiles.forEach(item => {
+        if (item.url) {
+          if (item.type === 'video') {
+            formData.append('existingVideos', item.url);
+          } else {
+            formData.append('existingImages', item.url);
+          }
         } else {
-          formData.append('images', file);
+          formData.append('media', item.file);
         }
       });
       if (tags) formData.append('tags', tags);
@@ -353,9 +456,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (page === 1) {
         postList.innerHTML = '';
       }
-      const filtered = query 
-        ? posts.filter(p => 
-            p.title.toLowerCase().includes(query.toLowerCase()) || 
+      const filtered = query
+        ? posts.filter(p =>
+            p.title.toLowerCase().includes(query.toLowerCase()) ||
             p.content.toLowerCase().includes(query.toLowerCase())
           )
         : posts;
@@ -375,7 +478,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  if (postList && searchInput) { 
+  if (postList && searchInput) {
     await loadDashboardPosts();
     searchInput.addEventListener('input', e => loadDashboardPosts(e.target.value, 1));
     postList.addEventListener('click', async e => {
