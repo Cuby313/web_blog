@@ -1,6 +1,6 @@
 /**
- * Manages blog posts: Handles CRUD operations for posts with multiple 
- * image uploads to Cloudinary and MongoDB storage.
+ * Manages blog posts: Handles CRUD operations for posts with multiple
+ * image and video uploads to Cloudinary and MongoDB storage.
  *
  * Features: Pagination, tag filtering, JWT-protected post creation, and
  * robust error handling for production.
@@ -14,7 +14,10 @@ import jwt from 'jsonwebtoken';
 import fs from 'fs/promises';
 
 const router = Router();
-const upload = multer({ dest: 'uploads/' });
+const upload = multer({ 
+  dest: 'uploads/',
+  limits: { fileSize: 100 * 1024 * 1024 } 
+});
 const uri = process.env.MONGO_URI;
 const client = new MongoClient(uri);
 let postsCollection;
@@ -33,7 +36,7 @@ async function connectDB() {
     if (!isConnected) {
       await client.connect();
       const db = client.db('blogdb');
-      postsCollection = db.collection('posts'); 
+      postsCollection = db.collection('posts');
       isConnected = true;
       console.log('MongoDB connected for posts');
     }
@@ -42,14 +45,15 @@ async function connectDB() {
     throw error;
   }
 }
+
 async function ensureDBConnection(req, res, next) {
   try {
     await connectDB();
     next();
   } catch (error) {
     res.status(500).json({ message: 'Database connection failed', error: error.message });
-    }
   }
+}
 
 router.use(ensureDBConnection);
 
@@ -87,7 +91,8 @@ router.get('/', async (req, res) => {
     const normalizedPosts = posts.map(post => ({
       ...post,
       images: post.images || (post.image ? [post.image] : []),
-      image: undefined 
+      videos: post.videos || [],
+      image: undefined
     }));
     const total = await postsCollection.countDocuments(query);
     res.json({
@@ -111,6 +116,7 @@ router.get('/:id', async (req, res) => {
     res.json({
       ...post,
       images: post.images || (post.image ? [post.image] : []),
+      videos: post.videos || [],
       image: undefined
     });
   } catch (error) {
@@ -119,8 +125,8 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// POST /api/posts - Create a new post with optional multiple image uploads
-router.post('/', authorize, upload.array('images', 10), async (req, res) => {
+// POST /api/posts - Create a new post with optional image and video uploads
+router.post('/', authorize, upload.array('media', 10), async (req, res) => {
   try {
     const { title, content, song, tags } = req.body;
     if (!title || !content) {
@@ -128,19 +134,25 @@ router.post('/', authorize, upload.array('images', 10), async (req, res) => {
     }
     const parsedTags = tags ? tags.split(',').map(t => t.trim()).filter(t => t) : [];
     let imageUrls = [];
+    let videoUrls = [];
 
     if (req.files && req.files.length > 0) {
       try {
         for (const file of req.files) {
+          const isVideo = file.mimetype.startsWith('video/');
           const result = await cloudinary.uploader.upload(file.path, {
-            folder: 'blog_images',
-            resource_type: 'image'
+            folder: isVideo ? 'blog_videos' : 'blog_images',
+            resource_type: isVideo ? 'video' : 'image'
           });
-          imageUrls.push(result.secure_url);
+          if (isVideo) {
+            videoUrls.push(result.secure_url);
+          } else {
+            imageUrls.push(result.secure_url);
+          }
         }
       } catch (uploadError) {
         console.error('Cloudinary upload failed:', uploadError);
-        return res.status(500).json({ message: 'Image upload failed', error: uploadError.message });
+        return res.status(500).json({ message: 'Media upload failed', error: uploadError.message });
       } finally {
         try {
           for (const file of req.files) {
@@ -159,11 +171,12 @@ router.post('/', authorize, upload.array('images', 10), async (req, res) => {
       content,
       songUrl: song || null,
       images: imageUrls,
+      videos: videoUrls,
       tags: parsedTags,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
-  
+
     const result = await postsCollection.insertOne(newPost);
     newPost._id = result.insertedId;
     res.status(201).json(newPost);
@@ -173,28 +186,34 @@ router.post('/', authorize, upload.array('images', 10), async (req, res) => {
   }
 });
 
-// PUT /api/posts/:id - Update a post with optional image uploads
-router.put('/:id', authorize, upload.array('images', 10), async (req, res) => {
+// PUT /api/posts/:id - Update a post with optional image and video uploads
+router.put('/:id', authorize, upload.array('media', 10), async (req, res) => {
   try {
-    const { title, content, song, tags, existingImages } = req.body;
+    const { title, content, song, tags, existingImages, existingVideos } = req.body;
     if (!title || !content) {
       return res.status(400).json({ message: 'Title and content are required' });
     }
     const parsedTags = tags ? tags.split(',').map(t => t.trim()).filter(t => t) : [];
     let imageUrls = existingImages ? (Array.isArray(existingImages) ? existingImages : [existingImages]) : [];
+    let videoUrls = existingVideos ? (Array.isArray(existingVideos) ? existingVideos : [existingVideos]) : [];
 
     if (req.files && req.files.length > 0) {
       try {
         for (const file of req.files) {
+          const isVideo = file.mimetype.startsWith('video/');
           const result = await cloudinary.uploader.upload(file.path, {
-            folder: 'blog_images',
-            resource_type: 'image'
+            folder: isVideo ? 'blog_videos' : 'blog_images',
+            resource_type: isVideo ? 'video' : 'image'
           });
-          imageUrls.push(result.secure_url);
+          if (isVideo) {
+            videoUrls.push(result.secure_url);
+          } else {
+            imageUrls.push(result.secure_url);
+          }
         }
       } catch (uploadError) {
         console.error('Cloudinary upload failed:', uploadError);
-        return res.status(500).json({ message: 'Image upload failed', error: uploadError.message });
+        return res.status(500).json({ message: 'Media upload failed', error: uploadError.message });
       } finally {
         try {
           for (const file of req.files) {
@@ -213,6 +232,7 @@ router.put('/:id', authorize, upload.array('images', 10), async (req, res) => {
       content,
       songUrl: song || null,
       images: imageUrls,
+      videos: videoUrls,
       tags: parsedTags,
       updatedAt: new Date().toISOString()
     };
@@ -236,10 +256,23 @@ router.put('/:id', authorize, upload.array('images', 10), async (req, res) => {
 // DELETE /api/posts/:id - Delete a post
 router.delete('/:id', authorize, async (req, res) => {
   try {
-    const result = await postsCollection.deleteOne({ _id: new ObjectId(req.params.id) });
-    if (result.deletedCount === 0) {
+    const post = await postsCollection.findOne({ _id: new ObjectId(req.params.id) });
+    if (!post) {
       return res.status(404).json({ message: 'Post not found' });
     }
+    if (post.images && post.images.length > 0) {
+      for (const url of post.images) {
+        const publicId = url.split('/').slice(-1)[0].split('.')[0];
+        await cloudinary.uploader.destroy(`blog_images/${publicId}`);
+      }
+    }
+    if (post.videos && post.videos.length > 0) {
+      for (const url of post.videos) {
+        const publicId = url.split('/').slice(-1)[0].split('.')[0];
+        await cloudinary.uploader.destroy(`blog_videos/${publicId}`, {resource_type: 'video'});
+      }
+    }
+    const result = await postsCollection.deleteOne({ _id: new ObjectId(req.params.id) });
     res.json({ message: 'Post deleted successfully' });
   } catch (error) {
     console.error('Error deleting post:', error);
