@@ -101,7 +101,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   function getThumbnail(post) {
     const fallbackImage = 'https://res.cloudinary.com/didhwj8j3/image/upload/v1750941449/front_logo_machu_k8wanc.png';
     
-    // Priority 1: First image
     if (post.images && post.images.length > 0) {
       return post.images[0];
     }
