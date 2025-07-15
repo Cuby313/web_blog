@@ -98,6 +98,29 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
+  function getThumbnail(post) {
+    const fallbackImage = 'https://res.cloudinary.com/didhwj8j3/image/upload/v1750941449/front_logo_machu_k8wanc.png';
+    
+    // Priority 1: First image
+    if (post.images && post.images.length > 0) {
+      return post.images[0];
+    }
+    
+    if (post.videos && post.videos.length > 0) {
+      const videoUrl = post.videos[0];
+      return videoUrl.replace('/upload/', '/upload/t_media_thumbnail/').replace(/\.[^/.]+$/, '.jpg');
+    }
+    
+    if (post.songUrl) {
+      const videoId = extractYouTubeId(post.songUrl);
+      if (videoId) {
+        return `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+      }
+    }
+    
+    return fallbackImage;
+  }
+
   // Multiple media preview and deletion
   async function updatePreviews() {
     if (!mediaPreviewContainer) return;
@@ -105,20 +128,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     for (let idx = 0; idx < selectedFiles.length; idx++) {
       const file = selectedFiles[idx];
       const wrapper = document.createElement('div');
-      wrapper.className = 'preview-wrapper' + ((typeof file === 'string' && file.includes('/video/')) || (file.type === 'video' || (file.url && file.url.includes('/video/'))) ? ' video-preview' : '');
+      wrapper.className = 'preview-wrapper' + (file.type === 'video' || (file.url && file.url.includes('/video/')) ? ' video-preview' : '');
       const element = document.createElement('img');
       element.className = 'media-preview';
       try {
-        if ((typeof file === 'string' && file.includes('/video/')) || (file.type === 'video' || (file.url && file.url.includes('/video/')))) {
-          if (file.url && file.url.includes('/video/')) {
-            element.src = file.url.replace('/upload/', '/upload/e_thumb/').replace(/\.[^/.]+$/, '.jpg');
-          } else if (file.file) {
-            element.src = await generateVideoThumbnail(file.file);
-          } else {
-            element.src = 'https://res.cloudinary.com/didhwj8j3/image/upload/v1750941449/front_logo_machu_k8wanc.png';
-          }
+        if (file.type === 'video' && file.file) {
+          element.src = await generateVideoThumbnail(file.file);
+        } else if (file.url && file.url.includes('/video/')) {
+          element.src = file.url.replace('/upload/', '/upload/t_media_thumbnail/').replace(/\.[^/.]+$/, '.jpg');
         } else {
-          element.src = typeof file === 'string' ? file : (file.url || URL.createObjectURL(file.file));
+          element.src = file.url || URL.createObjectURL(file.file);
         }
       } catch (error) {
         console.error('Error generating preview:', error);
@@ -220,11 +239,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       preview = preview.slice(0, maxLength).trimEnd().concat('…');
     }
     const fallbackImage = 'https://res.cloudinary.com/didhwj8j3/image/upload/v1750941449/front_logo_machu_k8wanc.png';
-    const mediaSrc = (post.images && post.images.length > 0) ? post.images[0] : 
-                     (post.videos && post.videos.length > 0) ? 
-                     post.videos[0].replace('/upload/', '/upload/e_thumb/').replace(/\.[^/.]+$/, '.jpg') : 
-                     fallbackImage;
-    const isVideo = post.videos && post.videos.length > 0 && !mediaSrc.includes('e_thumb');
+    const mediaSrc = getThumbnail(post); 
     const tagLabel = (post.tags && post.tags.length > 0) ? post.tags[0] : 'BLOG';
 
     const blogCard = document.createElement('div');
@@ -235,7 +250,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         <img src="${mediaSrc}" alt="${post.title}" width="250" class="blog-banner-img">
       </div>
       <div class="blog-content-wrapper">
-        <button class="blog-topic text-tiny">${post.songUrl ? 'SONG' : (isVideo ? 'VIDEO' : 'BLOG')}</button>
+        <button class="blog-topic text-tiny">${post.songUrl ? 'SONG' : (post.videos && post.videos.length > 0 ? 'VIDEO' : 'BLOG')}</button>      
         <button class="blog-topic text-tiny">${tagLabel}</button>
         <h3 class="h3"><a href="post.html?id=${post._id}">${post.title}</a></h3>
         <p class="blog-text">${preview}</p>
